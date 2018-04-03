@@ -4,7 +4,7 @@
 #include <math.h>
 
 // #define NUMT             4
-#define ARRAYSIZE       1000
+#define ARRAYSIZE       100000000
 #define NUMTRIES        10  
 
 float A[ARRAYSIZE];
