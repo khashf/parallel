@@ -1,0 +1,15 @@
+TARGET=project1
+CC=g++
+CXXFLAGS=-std=c++11 -Wall -Wextra
+CFLAGS=-g -O3
+FLAGS=${CFLAGs} ${CXXFLAGS} ${LIB}
+SRC=project1.cpp
+LIB=-lm -fopenmp
+
+all:
+	g++ -o ${TARGET} ${SRC} ${FLAGS}
+
+clean:
+	rm -f ${TARGET}
+
+.PHONY: clean, all
