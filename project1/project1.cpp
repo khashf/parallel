@@ -129,18 +129,13 @@ float ComputeActualArea(int iu, int iv) {
     //      - Tiles along the edges are half-sized. 
     //      - Tiles in the corners are quarter-sized. 
     //      The volume contribution of each extruded height tile 
-    //      needs to be weighted accordingly.
-    //  Arguments: 
-    //      iu,iv = 0 .. g_num_nodes-1
+    //      needs to be weighted accordingly
 
     float actualArea;
     TileLocation location;
     float volumeContribution;
     float fullTileArea;
-    float u, v;
     
-    u = (float)iu / (float)(g_num_nodes - 1);
-    v = (float)iv / (float)(g_num_nodes - 1);
     location = DetermineTileLocation(iu, iv);
     volumeContribution = DetermineVolumeContribution(location);
     fullTileArea = (((XMAX - XMIN)/(float)(g_num_nodes-1))
@@ -177,14 +172,13 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    //double max_mega_mults = 0.;
     double sum_volume = 0.0;
     double avg_volume;
     double sum_exec_time = 0.0;
     double avg_exec_time;
     
     g_num_threads = atoi(argv[1]);
-    g_num_nodes = atoi(argv[1]);
+    g_num_nodes = atoi(argv[2]);
     g_num_subdivisions = g_num_nodes * g_num_nodes;
 
     omp_set_num_threads(g_num_threads);
@@ -193,11 +187,11 @@ int main(int argc, char *argv[]) {
     cout << "Trying " << NUM_TRIES << " times" << endl;
 
     for (int t = 0; t < NUM_TRIES; ++t) {
-        cout << endl;
-        cout << "Trial #" << t << endl;
+        //cout << endl;
+        //cout << "Trial #" << t << endl;
         double time0 = omp_get_wtime(); // in seconds
         double volume = 0.0f;
-        #pragma omp parallel for default(none), reduction(+:volume)
+        #pragma omp parallel for default(none), shared(g_num_subdivisions, g_num_nodes) reduction(+:volume)
         for( int i = 0; i < g_num_subdivisions; i++ ) {
             int iu = i % g_num_nodes;
             int iv = i / g_num_nodes;
@@ -207,13 +201,13 @@ int main(int argc, char *argv[]) {
         double exec_time = (double)(time1 - time0) * pow(10.0, 9.0); // in nano seconds
         sum_volume += volume;
         sum_exec_time += exec_time;
-        cout << "Execution time = " << sum_exec_time << endl;
-        cout << "Volume = " << sum_volume << endl;
-        cout << endl;
+        //cout << "Execution time = " << sum_exec_time << endl;
+        //cout << "Volume = " << sum_volume << endl;
+        //cout << endl;
     }
 
     avg_exec_time = sum_exec_time / (double)NUM_TRIES;
     avg_volume = sum_volume / (double)NUM_TRIES;
     fprintf(stdout, "Average Execution Time = %10.2lf nano seconds\n", avg_exec_time);
-    fprintf(stdout, "Average Volume = %10.2lf (volume unit)\n", avg_volume);
+    fprintf(stdout, "Average Volume = %4.2lf (volume unit)\n", avg_volume);
 }
