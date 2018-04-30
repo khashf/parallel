@@ -7,3 +7,13 @@
 project1/project1
 
 \.vscode/
+
+project2/nbody-dynamic-coarse
+
+project2/nbody-dynamic-fine
+
+project2/nbody-static-coarse
+
+project2/nbody-static-fine
+
+project2/test-directives
