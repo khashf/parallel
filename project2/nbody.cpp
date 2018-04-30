@@ -54,9 +54,9 @@ int main(int argc, char *argv[]) {
         return 1;
     #endif
     if (argc != NUM_ARGS) {
-        cerr << "Number of arguments must be " << NUM_ARGS << endl;
+        cerr << "Number of arguments must be " << NUM_ARGS-1 << endl;
         cerr << "Usage" << endl;
-        cerr << argv[0] << " <number of threads> <number of nodes (sqrt(subdivision))>" << endl;
+        cerr << argv[0] << " <number of threads>" << endl;
         return 1;
     }
     
@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
     for (int t = 0; t < NUM_STEPS; t++) {
         #if PMODE == 0 // coarse-grained parallelism
             #if SMODE == 0 // static scheduling
-                #pragma omp parallel for schedule(static)
+                #pragma omp parallel for schedule(static) 
             #elif SMODE == 1 // dynamic scheduling
                 #pragma omp parallel for schedule(dynamic)
             #else
