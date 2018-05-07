@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
     cout << "Using " << numProcessors << " processors" << endl;
 
     const int numTries = 4;
-    const int numSteps = 1000000000;
+    const long numSteps = 1000000000;
     double time0 = omp_get_wtime();
     #if FIXMODE == 1
         #pragma omp parallel for
@@ -96,7 +96,7 @@ int main(int argc, char** argv) {
     
     double time1 = omp_get_wtime();
     double execTime = (double)(time1 - time0) * pow(10.0, 9.0); // in nano seconds
-    float MegaReadWritePerSec = ((float)(numTries * numSteps) / (time1 - time0) / 1000000.);
+    double MegaReadWritePerSec = ((double)(numTries * numSteps) / (time1 - time0) / 1000000.);
 
     cout << "Execution Time = " << execTime << endl;
     cout << "Mega Read Write Compared Per Seconds = " << MegaReadWritePerSec << endl;
