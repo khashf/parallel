@@ -97,10 +97,10 @@ int main(int argc, char** argv) {
     
     double time1 = omp_get_wtime();
     double execTime = (double)(time1 - time0) * pow(10.0, 9.0); // in nano seconds
-    double MegaReadWritePerSec = ((double)(numTries * numSteps) / (time1 - time0) / 1000000.);
+    double MegaReadWritePerSec = ((double)(numTries * 2 * numSteps) / (time1 - time0) / 1000000.);
 
     cout << "Execution Time = " << execTime << endl;
-    cout << "Mega Read Write Compared Per Seconds = " << MegaReadWritePerSec << endl;
+    cout << "Mega Read and Write Operations Compared Per Seconds = " << MegaReadWritePerSec << endl;
 
 }
 
