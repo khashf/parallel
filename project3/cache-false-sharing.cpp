@@ -42,6 +42,7 @@ const int NUM_ARGS = 2;
     // default struct
     struct s {
         float value;
+        int pad[NUM];
     } Array[4];
 #endif
 
