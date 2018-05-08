@@ -4,13 +4,14 @@ TARGET_FIX_2=${BIN_PATH}/cache-false-sharing-fix-2
 
 CC=g++
 CXXFLAGS=-std=c++11 -Wall -Wextra
-CFLAGS=-g
+CFLAGS=-g -O0
 LIB=-lm -fopenmp
-FLAGS=${CFLAGs} ${CXXFLAGS} ${LIB}
+FLAGS=${CFLAGS} ${CXXFLAGS} ${LIB}
 SRC=cache-false-sharing.cpp
 
 all: fix1 fix2
 fix1:
+	g++ -DFIXMODE=1 -DNUM=0 -o ${TARGET_FIX_1}-0 ${SRC} ${FLAGS}
 	g++ -DFIXMODE=1 -DNUM=1 -o ${TARGET_FIX_1}-1 ${SRC} ${FLAGS}
 	g++ -DFIXMODE=1 -DNUM=2 -o ${TARGET_FIX_1}-2 ${SRC} ${FLAGS}
 	g++ -DFIXMODE=1 -DNUM=3 -o ${TARGET_FIX_1}-3 ${SRC} ${FLAGS}

@@ -25,7 +25,7 @@ echo -n 'Fix #1 with 1 thread,Fix #1 with 2 threads,Fix #1 with 4 threads,' >> $
 echo -n 'Fix #2 with 1 threads,Fix #2 with 2 threads,Fix #2 with 4 threads' >> $OUTFILE
 echo >> $OUTFILE
 
-i=1
+i=0
 while [ $i -lt 19 ]; do
     echo -n "$i,"
     echo -n $( ./${FIX_1}-${i} 1 | tail -n1 | awk '{print $10}' )','
