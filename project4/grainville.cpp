@@ -172,7 +172,7 @@ void PrintState() {
     PrintAgents();
 }
 
-int main(int argc, char** argv) {
+int main() {
     omp_set_num_threads(NUM_THREADS);
 
     InitData();
