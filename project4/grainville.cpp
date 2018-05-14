@@ -133,6 +133,7 @@ float ComputeGrain() {
 }
 
 void UpdateGrain(float tmpGrainHeight) {
+
     NowGrainHeight += tmpGrainHeight;
     if (NowGrainHeight < 0)
         NowGrainHeight = 0;
@@ -152,18 +153,18 @@ void UpdateDeers(int tmpDeers) {
 }
 
 void PrintTime() {
-    cout << "NowMonth: " << NowMonth << endl;
-    cout << "NowYear: " << NowYear << endl;
+    std::cout << "NowMonth: " << NowMonth << endl;
+    std::cout << "NowYear: " << NowYear << endl;
 }
 
 void PrintFactors() {
-    cout << "NowTemp: " << NowTemperature << endl;
-    cout << "NowPrecip: " << NowPrecip << endl;
+    std::cout << "NowTemp: " << NowTemperature << endl;
+    std::cout << "NowPrecip: " << NowPrecip << endl;
 }
 
 void PrintAgents() {
-    cout << "NowGrain: " << NowGrainHeight << endl;
-    cout << "NowDeers: " << NowNumDeer << endl;
+    std::cout << "NowGrain: " << NowGrainHeight << endl;
+    std::cout << "NowDeers: " << NowNumDeer << endl;
 }
 
 void PrintState() {
@@ -177,33 +178,84 @@ int main() {
 
     InitData();
     UpdateFactors(); // init the factor for the 1st time
-    for (int iStep = 1; iStep <= NUM_STEPS; ++iStep) {
-        #pragma omp parallel sections default(none) shared(NowGrainHeight, NowNumDeer) {
-            #pragma omp section {
-                cout << "Section [Grain] Thread [" << omp_get_thread_num() << "] - computing grain" << endl;
-                float tmpGrainHeight = ComputeGrain();
-                #pragma omp barrier
-                cout << "Section [Grain] Thread [" << omp_get_thread_num() << "] - updating grain" << endl;
-                UpdateGrain(tmpGrainHeight);
-                #pragma omp barrier
-            }
-            #pragma omp section {
-                cout << "Section [Deers] Thread [" << omp_get_thread_num() << "] - computing deers" << endl;
-                float tmpDeers = ComputeDeers();
-                #pragma omp barrier
-                cout << "Section [Deers] Thread [" << omp_get_thread_num() << "] - updating deers" << endl;
-                UpdateDeer(tmpDeers);
-                #pragma omp barrier
-            }
-            #pragma omp section {
-                #pragma omp barrier
-                cout << "Section [Watcher] Thread [" << omp_get_thread_num() << "] - printing and updating states" << endl;
-                PrintState();
-                UpdateTime();
-                UpdateFactors();
-            }
-        } // omp parallel sections
-    } // for NUM_STEPS
+    //for (int iStep = 1; iStep <= NUM_STEPS; ++iStep) {
+    omp_lock_t* lockDeer;
+    omp_lock_t* lockGrain;
+    omp_lock_t* lockWatcherByGrain;
+    omp_lock_t* lockWatcherByDeer;
+    omp_init_lock(lockDeer);
+    omp_init_lock(lockGrain);
+    omp_init_lock(lockWatcherByGrain);
+    omp_init_lock(lockWatcherByDeer);
+    #pragma omp parallel sections default(none) shared(std::cout, lockWatcherByDeer, lockWatcherByGrain, NowGrainHeight, NowNumDeer, NowMonth, NowYear, NowPrecip, NowTemperature, lockDeer, lockGrain)
+    {
+        #pragma omp section 
+        {
+            std::cout << "Section [Grain] Thread [" << omp_get_thread_num() << "]: locking [Deer] from updating" << endl;
+            omp_set_lock(lockDeer);
+            std::cout << "Section [Grain] Thread [" << omp_get_thread_num() << "]: locking [Watcher] from starting" << endl;
+            omp_set_lock(lockWatcherByGrain);
+
+            std::cout << "Section [Grain] Thread [" << omp_get_thread_num() << "]: computing grain" << endl;
+            float tmpGrainHeight = ComputeGrain();
+
+            std::cout << "Section [Grain] Thread [" << omp_get_thread_num() << "]: unlocking [Deer] from updating" << endl;
+            omp_unset_lock(lockDeer);
+            std::cout << "Section [Grain] Thread [" << omp_get_thread_num() << "]: waiting for [Deer] to unlock for update" << endl;
+            omp_set_lock(lockGrain);
+            std::cout << "Section [Grain] Thread [" << omp_get_thread_num() << "]: has been unlocked by [Deer]" << endl;
+            std::cout << "Section [Grain] Thread [" << omp_get_thread_num() << "]: updating grain" << endl;
+            UpdateGrain(tmpGrainHeight);
+            omp_unset_lock(lockGrain);
+
+            std::cout << "Section [Grain] Thread [" << omp_get_thread_num() << "]: unlocking [Watcher] from starting" << endl;
+            omp_unset_lock(lockWatcherByGrain);
+
+        }
+        #pragma omp section 
+        {
+            std::cout << "Section [Deers] Thread [" << omp_get_thread_num() << "]: locking [Grain] from updating" << endl;
+            omp_set_lock(lockGrain);
+            std::cout << "Section [Deers] Thread [" << omp_get_thread_num() << "]: locking [Watcher] from starting" << endl;
+            omp_set_lock(lockWatcherByDeer);
+
+            std::cout << "Section [Deers] Thread [" << omp_get_thread_num() << "]: computing deers" << endl;
+            float tmpDeers = ComputeDeers();
+            
+            std::cout << "Section [Deers] Thread [" << omp_get_thread_num() << "]: unlocking [Grain] from updating" << endl;
+            omp_unset_lock(lockGrain);
+            std::cout << "Section [Deers] Thread [" << omp_get_thread_num() << "]: waiting for [Grain] to unlock for update" << endl;
+            omp_set_lock(lockDeer);
+            std::cout << "Section [Deers] Thread [" << omp_get_thread_num() << "]: has been unlocked by [Grain]" << endl;
+            std::cout << "Section [Deers] Thread [" << omp_get_thread_num() << "]: updating deers" << endl;
+            UpdateDeers(tmpDeers);
+            omp_unset_lock(lockDeer);
+
+            std::cout << "Section [Deers] Thread [" << omp_get_thread_num() << "]: unlocking [Watcher] from starting" << endl;
+            omp_unset_lock(lockWatcherByDeer);
+
+        }
+        #pragma omp section 
+        {
+            
+            std::cout << "Section [Watcher] Thread [" << omp_get_thread_num() << "]: waiting for [Grain] to unlock from doing work" << endl;
+            omp_set_lock(lockWatcherByGrain);
+            omp_unset_lock(lockWatcherByGrain);
+            std::cout << "Section [Watcher] Thread [" << omp_get_thread_num() << "]: waiting for [Deer] to unlock from doing work" << endl;
+            omp_set_lock(lockWatcherByDeer);
+            omp_unset_lock(lockWatcherByDeer);
+
+            std::cout << "Section [Watcher] Thread [" << omp_get_thread_num() << "]: doing work" << endl;
+            PrintState();
+            UpdateTime();
+            UpdateFactors();
+
+        }
+    } // omp parallel sections
     
+    omp_destroy_lock(lockDeer);
+    omp_destroy_lock(lockGrain);
+    omp_destroy_lock(lockWatcherByDeer);
+    omp_destroy_lock(lockWatcherByGrain);
     return 0;
 }
