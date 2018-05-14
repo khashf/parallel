@@ -178,40 +178,31 @@ int main(int argc, char** argv) {
     InitData();
     UpdateFactors(); // init the factor for the 1st time
     for (int iStep = 1; iStep <= NUM_STEPS; ++iStep) {
-        #pragma omp parallel {
-            // Computing
-            #pragma omp sections {
-                #pragma omp section {
-                    cout << "Section [Grain] Thread [" << omp_get_thread_num() << "] - computing grain" << endl;
-                    float tmpGrainHeight = ComputeGrain();
-                    
-                }
-                #pragma omp section {
-                    cout << "Section [Deers] Thread [" << omp_get_thread_num() << "] - computing deers" << endl;
-                    float tmpDeers = ComputeDeers();
-                }
+        #pragma omp parallel sections default(none) shared(NowGrainHeight, NowNumDeer) {
+            #pragma omp section {
+                cout << "Section [Grain] Thread [" << omp_get_thread_num() << "] - computing grain" << endl;
+                float tmpGrainHeight = ComputeGrain();
+                #pragma omp barrier
+                cout << "Section [Grain] Thread [" << omp_get_thread_num() << "] - updating grain" << endl;
+                UpdateGrain(tmpGrainHeight);
+                #pragma omp barrier
             }
-            // Updating
-            #pragma omp sections {
-                #pragma omp section {
-                    cout << "Section [Grain] Thread [" << omp_get_thread_num() << "] - updating grain" << endl;
-                    UpdateGrain(tmpGrainHeight);
-                }
-                #pragma omp section {
-                    cout << "Section [Deers] Thread [" << omp_get_thread_num() << "] - updating deers" << endl;
-                    UpdateDeer(tmpDeers);
-                }
+            #pragma omp section {
+                cout << "Section [Deers] Thread [" << omp_get_thread_num() << "] - computing deers" << endl;
+                float tmpDeers = ComputeDeers();
+                #pragma omp barrier
+                cout << "Section [Deers] Thread [" << omp_get_thread_num() << "] - updating deers" << endl;
+                UpdateDeer(tmpDeers);
+                #pragma omp barrier
             }
-            // Printing results
-            #pragma omp sections {
-                #pragma omp section {
-                    cout << "Section [Watcher] Thread [" << omp_get_thread_num() << "] - printing and updating states" << endl;
-                    PrintState();
-                    UpdateTime();
-                    UpdateFactors();
-                }
+            #pragma omp section {
+                #pragma omp barrier
+                cout << "Section [Watcher] Thread [" << omp_get_thread_num() << "] - printing and updating states" << endl;
+                PrintState();
+                UpdateTime();
+                UpdateFactors();
             }
-        } // omp parallel
+        } // omp parallel sections
     } // for NUM_STEPS
     
     return 0;
