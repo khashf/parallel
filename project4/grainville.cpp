@@ -70,15 +70,15 @@ float Ranf(float low, float high, unsigned int* seed) {
 void UpdateNowTemperature() {
     float ang = (30. * (float)NowMonth + 15.) * (M_PI / 180.);
     float temp = AVG_TEMP - AMP_TEMP * cos(ang);
-    _Thread_local unsigned int seed = time(NULL);
-    NowTemperature = temp + Ranf(-RANDOM_TEMP, RANDOM_TEMP, seed);
+    unsigned int seed = time(NULL);
+    NowTemperature = temp + Ranf(-RANDOM_TEMP, RANDOM_TEMP, &seed);
 }
 
 void UpdateNowPrecip() {
     float ang = (30. * (float)NowMonth + 15.) * (M_PI / 180.);
     float precip = AVG_PRECIP_PER_MONTH + AMP_PRECIP_PER_MONTH * sin(ang);
-    _Thread_local unsigned int seed = time(NULL);
-    NowPrecip = precip + Ranf(-RANDOM_PRECIP, RANDOM_PRECIP, seed);
+    unsigned int seed = time(NULL);
+    NowPrecip = precip + Ranf(-RANDOM_PRECIP, RANDOM_PRECIP, &seed);
     if( NowPrecip < 0.)
         NowPrecip = 0.;
 }
@@ -104,12 +104,12 @@ void InitData() {
 }
 
 float ComputeTemperatureFactor() {
-    float tf = exp((-1) * pow((float)((NowTemperature - MIDTEMP)/10), 2.0f);
+    float tf = exp((-1) * pow((float)((NowTemperature - MIDTEMP)/10), 2.0f));
     return tf;
 }
 
 float ComputePrecipFactor() {
-    float pf = exp((-1) * pow((float)((NowPrecip - MIDPRECIP)/10), 2.0f);
+    float pf = exp((-1) * pow((float)((NowPrecip - MIDPRECIP)/10), 2.0f));
     return pf;
 }
 
@@ -127,7 +127,7 @@ float DeersEatGrain() {
 
 float ComputeGrain() {
     float grownGrain = GrainGrow();
-    float eatenGrain = DeersEatGrain(grownGrain);
+    float eatenGrain = DeersEatGrain();
     float finalGrain = grownGrain - eatenGrain;
     return finalGrain;
 }
@@ -161,50 +161,58 @@ void PrintFactors() {
     cout << "NowPrecip: " << NowPrecip << endl;
 }
 
-void PrintState() {
+void PrintAgents() {
     cout << "NowGrain: " << NowGrainHeight << endl;
     cout << "NowDeers: " << NowNumDeer << endl;
+}
+
+void PrintState() {
+    PrintTime();
+    PrintFactors();
+    PrintAgents();
 }
 
 int main(int argc, char** argv) {
     omp_set_num_threads(NUM_THREADS);
 
     InitData();
-    UpdateFactors(); // the 1st time
-    PrintTime();
-    PrintState();
-    PrintFactors();
+    UpdateFactors(); // init the factor for the 1st time
     for (int iStep = 1; iStep <= NUM_STEPS; ++iStep) {
-        #pragma omp parallel sections {
-            #pragma omp section {
-                cout << "Section [Grain] Thread [" << omp_get_thread_num() << "] - computing grain" << endl;
-                float tmpGrainHeight = ComputeGrain();
-                // barrier for computing
-                cout << "Section [Grain] Thread [" << omp_get_thread_num() << "] - updating grain" << endl;
-                UpdateGrain(tmpGrainHeight);
-                // barrier for updating
+        #pragma omp parallel {
+            // Computing
+            #pragma omp sections {
+                #pragma omp section {
+                    cout << "Section [Grain] Thread [" << omp_get_thread_num() << "] - computing grain" << endl;
+                    float tmpGrainHeight = ComputeGrain();
+                    
+                }
+                #pragma omp section {
+                    cout << "Section [Deers] Thread [" << omp_get_thread_num() << "] - computing deers" << endl;
+                    float tmpDeers = ComputeDeers();
+                }
             }
-            #pragma omp section {
-                cout << "Section [Deers] Thread [" << omp_get_thread_num() << "] - computing deers" << endl;
-                float tmpDeers = ComputeDeers();
-                // barrier for computing
-                cout << "Section [Deers] Thread [" << omp_get_thread_num() << "] - updating deers" << endl;
-                UpdateDeer(tmpDeers);
-                // barrier for updating
+            // Updating
+            #pragma omp sections {
+                #pragma omp section {
+                    cout << "Section [Grain] Thread [" << omp_get_thread_num() << "] - updating grain" << endl;
+                    UpdateGrain(tmpGrainHeight);
+                }
+                #pragma omp section {
+                    cout << "Section [Deers] Thread [" << omp_get_thread_num() << "] - updating deers" << endl;
+                    UpdateDeer(tmpDeers);
+                }
             }
-            #pragma omp section {
-                cout << "Section [Watcher] Thread [" << omp_get_thread_num() << "] - printing time and factors" << endl;
-                PrintTime();
-                PrintFactors();
-                // barrier: wait for computing and updating are done
-                cout << "Section [Watcher] Thread [" << omp_get_thread_num() << "] - printing states and updating time & factors" << endl;
-                PrintState();
-                UpdateTime();
-                UpdateFactors();
+            // Printing results
+            #pragma omp sections {
+                #pragma omp section {
+                    cout << "Section [Watcher] Thread [" << omp_get_thread_num() << "] - printing and updating states" << endl;
+                    PrintState();
+                    UpdateTime();
+                    UpdateFactors();
+                }
             }
-            // Implied barrier for all
-        }
-    }
+        } // omp parallel
+    } // for NUM_STEPS
     
     return 0;
 }
