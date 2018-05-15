@@ -4,6 +4,7 @@
 #include <iostream>
 #include <omp.h>
 #include <time.h>
+#include <random>
 
 using std::cerr;
 using std::endl;
@@ -60,24 +61,40 @@ float NowTemperature; // temperature this month
 float NowGrainHeight; // grain height of this month
 int NowNumDeer; // current deer population
 int NowNumWolf; // current wolf population
+int LatestNumDeersEaten;
+float LatestGrainStomped;
 
-float Ranf(float low, float high, unsigned int* seed) {
-    float r = (float) rand_r(seed); // 0 - RAND_MAX
-    return ((low + r * (high - low) / (float)RAND_MAX));
+// From: https://stackoverflow.com/questions/29709897/c-thread-safe-uniform-distribution-random-number-generation
+float Ranf(float min, float max) {
+    thread_local std::mt19937 generator(std::random_device{}());
+    std::uniform_real_distribution<float> distribution(min, max);
+    float chance = distribution(generator);
+    //cout << "chance = " << chance << endl;
+    return chance;
 }
+
+// float Ranf(float low, float high) {
+//     cout << "low=" << low << endl;
+//     cout << "high=" << high << endl;
+//     unsigned int seed = time(NULL);
+//     cout << "seed = " << seed << endl;
+//     float r = (float) rand_r(&seed); // 0 - RAND_MAX
+//     cout << "r = " << r << endl;
+//     float chance = ((low + r * (high - low) / (float)RAND_MAX));
+//     //cout << "chance = " << chance << endl;
+//     return chance;
+// }
 
 void UpdateNowTemperature() {
     float ang = (30.0f * (float)NowMonth + 15.0f) * (M_PI / 180.0f);
     float temp = AVG_TEMP - AMP_TEMP * cos(ang);
-    unsigned int seed = time(NULL);
-    NowTemperature = temp + Ranf(-RANDOM_TEMP, RANDOM_TEMP, &seed);
+    NowTemperature = temp + Ranf(-RANDOM_TEMP, RANDOM_TEMP);
 }
 
 void UpdateNowPrecip() {
     float ang = (30.0f * (float)NowMonth + 15.0f) * (M_PI / 180.0f);
     float precip = AVG_PRECIP_PER_MONTH + AMP_PRECIP_PER_MONTH * sin(ang);
-    unsigned int seed = time(NULL);
-    NowPrecip = precip + Ranf(-RANDOM_PRECIP, RANDOM_PRECIP, &seed);
+    NowPrecip = precip + Ranf(-RANDOM_PRECIP, RANDOM_PRECIP);
     if( NowPrecip < 0.0f)
         NowPrecip = 0.0f;
 }
@@ -96,10 +113,13 @@ void UpdateTime() {
 }
 
 void InitData() {
-    NowNumDeer = 1;
-    NowGrainHeight = 1.0f;
     NowMonth = 1;
     NowYear = 2018;
+    NowNumDeer = 1;
+    NowNumWolf = 20;
+    NowGrainHeight = 1.0f;
+    LatestNumDeersEaten = 0;
+    LatestGrainStomped = 0.0f;
 }
 
 float ComputeTemperatureFactor() {
@@ -124,7 +144,7 @@ float DeersEatGrain() {
     return eatenGrain;
 }
 
-float ComputeGrainStage1() {
+float ComputeGrain() {
     float grownGrain = GrainGrow();
     float eatenGrain = DeersEatGrain();
     float finalGrain = grownGrain - eatenGrain;
@@ -133,18 +153,19 @@ float ComputeGrainStage1() {
 
 void UpdateGrain(float tmpGrainHeight) {
     NowGrainHeight += tmpGrainHeight;
+    NowGrainHeight -= LatestGrainStomped;
     if (NowGrainHeight < 0.0f)
         NowGrainHeight = 0.0f;
 }
 
 void Grain() {
-    float tmpGrainHeight = ComputeGrainStage1();
+    float tmpGrainHeight = ComputeGrain();
     #pragma omp barrier // computing barrier
     UpdateGrain(tmpGrainHeight);
     #pragma omp barrier // updating barrier
 }
 
-int ComputeDeersStage1() {
+int ComputeDeers() {
     float requiredGrain = NowNumDeer * ONE_DEER_EATS_PER_MONTH;
     float diffGrain = NowGrainHeight - requiredGrain;
     float diffDeers = diffGrain / ONE_DEER_EATS_PER_MONTH;
@@ -153,12 +174,13 @@ int ComputeDeersStage1() {
 
 void UpdateDeers(int tmpDeers) {
     NowNumDeer += tmpDeers;
+    NowNumDeer -= LatestNumDeersEaten;
     if (NowNumDeer < 0)
         NowNumDeer = 0;
 }
 
 void Deer() {
-    float tmpDeers = ComputeDeersStage1();
+    float tmpDeers = ComputeDeers();
     #pragma omp barrier // computing barrier
     UpdateDeers(tmpDeers);
     #pragma omp barrier // updating barrier
@@ -168,17 +190,56 @@ int WolfBorn() {
     int numNewWolfs = 0;
     if (NowNumWolf <= 1)
         return 0;
-    int nPairs = NowNumWolf / 2;
-    for (int i = 1; i < nPairs; ++i) {
-        if (Ranf(1, 100) <= 25)) // 25% chance a new wolf is born frmo a pair
-            continue;
-        numNewWolfs += 1;
-    }
+    if (Ranf(1.0f, 100.0f) > 50.0f) // 10% chance a new wolf is born
+        return 0;
+    numNewWolfs *= 2;
+    cout << "Born " << numNewWolfs << " wolfs" << endl;
     return numNewWolfs;
 }
 
-int ComputeWolfStage1() {
-    
+bool hasWolfAttack() {
+    float chance = Ranf(1.0f, 100.0f);
+    if (NowNumDeer >= NowNumWolf || chance <= 50.0f)
+        return true;
+    else
+        return false;
+}
+
+int WolfsEatDeers() {
+    int deersEaten = NowNumWolf/2 - static_cast<int>(NowGrainHeight*2.0f);
+    if (deersEaten < 0)
+        return 0;
+    return deersEaten;
+}
+
+int WolfsStompGrain() {
+    return LatestNumDeersEaten * 0.05f;
+}
+
+int WolfStarved() {
+    int numWolfStarved;
+    if (!hasWolfAttack()) {
+        LatestNumDeersEaten = 0;
+        LatestGrainStomped = 0.0f;
+        numWolfStarved = NowNumWolf/4;
+        cout << numWolfStarved << " wolfs died from starving..." << endl;
+        return (-1)*numWolfStarved; // a quarter of population will die
+    }
+    cout << NowNumWolf << " wolfs attack " << NowNumDeer << " deers!" << endl;
+    LatestNumDeersEaten = WolfsEatDeers();
+    LatestGrainStomped = WolfsStompGrain();
+    numWolfStarved = (NowNumWolf - LatestNumDeersEaten * 2);
+    if (numWolfStarved < 0)
+        return 0;
+    cout << numWolfStarved << " wolfs died from starving..." << endl;
+    return (-1)*numWolfStarved;
+}
+
+int ComputeWolf() {
+    int tmpWolf = 0;
+    tmpWolf += WolfBorn();
+    tmpWolf += WolfStarved();
+    return tmpWolf;
 }
 
 void UpdateWolf(int tmpWolfs) {
@@ -188,10 +249,10 @@ void UpdateWolf(int tmpWolfs) {
 }
 
 void Wolf() {
-    int tmpWolfs = ComputeWolfStage1();
-    #pragma omp barrier // computing barrier
-    UpdateWolf();
-    #pragma omp barrier // updating barrier
+    int tmpWolfs = ComputeWolf();
+    #pragma omp barrier // computing barrier 1
+    UpdateWolf(tmpWolfs);
+    #pragma omp barrier // updating barrier 1
 }
 
 void PrintTime() {
@@ -207,6 +268,7 @@ void PrintFactors() {
 void PrintAgents() {
     cout << "NowGrain: " << NowGrainHeight << endl;
     cout << "NowDeers: " << NowNumDeer << endl;
+    cout << "NowWolfs: " << NowNumWolf << endl;
 }
 
 void PrintState() {
@@ -231,7 +293,7 @@ int main() {
     for (int iStep = 1; iStep <= NUM_STEPS; ++iStep) {
         cout << endl << "=============================" << endl;
         cout << "         Step " << iStep << endl << endl;
-        #pragma omp parallel sections default(none) shared(NowGrainHeight, NowNumDeer, NowNumWolf)
+        #pragma omp parallel sections default(none) shared(NowGrainHeight, NowNumDeer, NowNumWolf, LatestGrainStomped, LatestNumDeersEaten)
         {
             #pragma omp section
             {

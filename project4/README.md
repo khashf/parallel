@@ -37,11 +37,11 @@ Each thread should return when the year hits 2020 (giving us 6 years, or 72 mont
 
 #### Compute stage 2
 
-* The percentage of chance that the wolf pack attack the deers is propotional to the number of wolfs
+* The percentage of chance that the wolf pack attack the deers is propotional to the number of wolfs and the number of deers
 
-* In the event of wolf-attack, the bigger the value of grain height, the less deers are killed; but the more deers are existing, the more of them are killed. Also, the more there are wolfs in the attack, the more grain will be storm down during the chase. If there are no wolf-attack in 2 month, half of the wolfs will die.
+* In the event of wolf-attack, the bigger the value of grain height, the less deers are killed because as higher grain, deers can get away from wolf due to lack of sight. Also, the more there are wolfs in the attack, the more grain will be storm down during the chase. If there are no wolf-attack in a month, a quarter of population will die that month
 
-* The wolfs only come at the end of the month when the grain has grown and the deers are fed (when both values are updated)
+* The wolfs only come in stage 2, at the end of the month, when the grain has grown and the deers have been well fed (when both values are updated)
 
 * 2 wolf eat 1 deer. If there are more deers than the required numbers, it's fine, but if there are not enough deers for all the wolf, the wolf population will decrease by (required deers - actual deers)/2
 
