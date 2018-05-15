@@ -190,9 +190,7 @@ int WolfBorn() {
     int numNewWolfs = 0;
     if (NowNumWolf <= 1)
         return 0;
-    if (Ranf(1.0f, 100.0f) > 50.0f) // 10% chance a new wolf is born
-        return 0;
-    numNewWolfs *= 2;
+    numNewWolfs = 10;
     cout << "Born " << numNewWolfs << " wolfs" << endl;
     return numNewWolfs;
 }
