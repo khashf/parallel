@@ -172,40 +172,31 @@ void PrintState() {
     PrintAgents();
 }
 
-int a = 1;
-int b = 1;
-
 void Grain() {
-    //cout << "Section [Grain] Thread [" << omp_get_thread_num() << "] - computing grain" << endl;
-    //float tmpGrainHeight = ComputeGrain();
-    int tmpA = a + b + 1; // tmp = 3
+    cout << "Section [Grain] Thread [" << omp_get_thread_num() << "] - computing grain" << endl;
+    float tmpGrainHeight = ComputeGrain();
     #pragma omp barrier // computing barrier
-    //cout << "Section [Grain] Thread [" << omp_get_thread_num() << "] - updating grain" << endl;
-    //UpdateGrain(tmpGrainHeight);
-    a = tmpA; // a = 3
+    cout << "Section [Grain] Thread [" << omp_get_thread_num() << "] - updating grain" << endl;
+    UpdateGrain(tmpGrainHeight);
     #pragma omp barrier // updating barrier
 }
 
 void Deer() {
-    //cout << "Section [Deers] Thread [" << omp_get_thread_num() << "] - computing deers" << endl;
-    //float tmpDeers = ComputeDeers();
-    int tmpB = a * 2 + b * 2 + 1; // tmp = 5
+    cout << "Section [Deers] Thread [" << omp_get_thread_num() << "] - computing deers" << endl;
+    float tmpDeers = ComputeDeers();
     #pragma omp barrier // computing barrier
-    //cout << "Section [Deers] Thread [" << omp_get_thread_num() << "] - updating deers" << endl;
-    //UpdateDeers(tmpDeers);
-    b = tmpB; // b = 5
+    cout << "Section [Deers] Thread [" << omp_get_thread_num() << "] - updating deers" << endl;
+    UpdateDeers(tmpDeers);
     #pragma omp barrier // updating barrier
 }
 
 void Watcher() {
     #pragma omp barrier // computing barrier
     #pragma omp barrier // updating barrier
-    //cout << "Section [Watcher] Thread [" << omp_get_thread_num() << "] - printing and updating states" << endl;
-    //PrintState();
-    //UpdateTime();
-    //UpdateFactors();
-    cout << "a=" << a << endl; // a = 3
-    cout << "b=" << b << endl; // b = 5
+    cout << "Section [Watcher] Thread [" << omp_get_thread_num() << "] - printing and updating states" << endl;
+    PrintState();
+    UpdateTime();
+    UpdateFactors();
 }
 
 int main() {
@@ -214,7 +205,7 @@ int main() {
     InitData();
     UpdateFactors(); // init the factor for the 1st time
     //for (int iStep = 1; iStep <= NUM_STEPS; ++iStep) {
-        #pragma omp parallel sections default(none) shared(a ,b, NowGrainHeight, NowNumDeer)
+        #pragma omp parallel sections default(none) shared(NowGrainHeight, NowNumDeer)
         {
             #pragma omp section
             {
