@@ -30,7 +30,10 @@ Each thread should return when the year hits 2020 (giving us 6 years, or 72 mont
 ### Wolfs
 
 #### Compute stage 1
-* More wolfs are born only when there are more than 1 wolf in the pack. The chance of wolfs being born increase when the temperature and precip is nice. The "nice" condition is harder than grain, so we can use 150% of grain-nuturing condition as wolf-breading condition.
+
+* More wolfs are born only when there are more than 1 wolf in the pack.
+
+* There is 25% chance a new wolf is born from a pair of wolfs
 
 #### Compute stage 2
 

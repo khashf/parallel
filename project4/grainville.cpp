@@ -164,8 +164,21 @@ void Deer() {
     #pragma omp barrier // updating barrier
 }
 
-int ComputeWolfStage1() {
+int WolfBorn() {
+    int numNewWolfs = 0;
+    if (NowNumWolf <= 1)
+        return 0;
+    int nPairs = NowNumWolf / 2;
+    for (int i = 1; i < nPairs; ++i) {
+        if (Ranf(1, 100) <= 25)) // 25% chance a new wolf is born frmo a pair
+            continue;
+        numNewWolfs += 1;
+    }
+    return numNewWolfs;
+}
 
+int ComputeWolfStage1() {
+    
 }
 
 void UpdateWolf(int tmpWolfs) {
