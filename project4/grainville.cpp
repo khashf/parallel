@@ -38,7 +38,7 @@ const float MIDPRECIP = 10.0f;
 
 // Program config
 const int NUM_ARGS = 1;
-const int NUM_AGENTS = 3;
+const int NUM_AGENTS = 4;
 const int NUM_THREADS = NUM_AGENTS;
 const int NUM_STEPS = 72; // Each thread should return when the year hits 2020 
                           // (giving us 6 years, or 72 months, of simulation).
@@ -59,8 +59,7 @@ float NowTemperature; // temperature this month
 // Agents
 float NowGrainHeight; // grain height of this month
 int NowNumDeer; // current deer population
-
-
+int NowNumWolf; // current wolf population
 
 float Ranf(float low, float high, unsigned int* seed) {
     float r = (float) rand_r(seed); // 0 - RAND_MAX
@@ -151,6 +150,8 @@ void UpdateDeers(int tmpDeers) {
         NowNumDeer = 0;
 }
 
+float 
+
 void PrintTime() {
     cout << "NowMonth: " << NowMonth << endl;
     cout << "NowYear: " << NowYear << endl;
@@ -190,6 +191,23 @@ void Deer() {
     #pragma omp barrier // updating barrier
 }
 
+int ComputeWolf() {
+
+}
+
+void UpdateWolf(int tmpWolfs) {
+    NowNumWolf += tmpWolfs;
+    if (NowNumWolf < 0)
+        NowNumWolf = 0;    
+}
+
+void Wolf() {
+    int tmpWolfs = ComputeWolf();
+    #pragma omp barrier // computing barrier
+    UpdateWolf();
+    #pragma omp barrier // updating barrier
+}
+
 void Watcher() {
     #pragma omp barrier // computing barrier
     #pragma omp barrier // updating barrier
@@ -207,7 +225,7 @@ int main() {
     for (int iStep = 1; iStep <= NUM_STEPS; ++iStep) {
         cout << endl << "=============================" << endl;
         cout << "         Step " << iStep << endl << endl;
-        #pragma omp parallel sections default(none) shared(NowGrainHeight, NowNumDeer)
+        #pragma omp parallel sections default(none) shared(NowGrainHeight, NowNumDeer, NowNumWolf)
         {
             #pragma omp section
             {
@@ -216,6 +234,10 @@ int main() {
             #pragma omp section
             {
                 Deer();
+            }
+            #pragma omp section
+            {
+                Wolf();
             }
             #pragma omp section
             {
