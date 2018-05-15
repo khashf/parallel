@@ -204,7 +204,7 @@ int main() {
 
     InitData();
     UpdateFactors(); // init the factor for the 1st time
-    //for (int iStep = 1; iStep <= NUM_STEPS; ++iStep) {
+    for (int iStep = 1; iStep <= NUM_STEPS; ++iStep) {
         #pragma omp parallel sections default(none) shared(NowGrainHeight, NowNumDeer)
         {
             #pragma omp section
@@ -220,7 +220,7 @@ int main() {
                 Watcher();
             }
         } // omp parallel sections
-    //} // for NUM_STEPS
+    } // for NUM_STEPS
     
     return 0;
 }
