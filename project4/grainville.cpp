@@ -191,7 +191,7 @@ int WolfBorn() {
     if (NowNumWolf <= 1)
         return 0;
     numNewWolfs = 10;
-    cout << "Born " << numNewWolfs << " wolfs" << endl;
+    //cout << "Born " << numNewWolfs << " wolfs" << endl;
     return numNewWolfs;
 }
 
@@ -220,16 +220,16 @@ int WolfStarved() {
         LatestNumDeersEaten = 0;
         LatestGrainStomped = 0.0f;
         numWolfStarved = NowNumWolf/4;
-        cout << numWolfStarved << " wolfs died from starving..." << endl;
+        //cout << numWolfStarved << " wolfs died from starving..." << endl;
         return (-1)*numWolfStarved; // a quarter of population will die
     }
-    cout << NowNumWolf << " wolfs attack " << NowNumDeer << " deers!" << endl;
+    //cout << NowNumWolf << " wolfs attack " << NowNumDeer << " deers!" << endl;
     LatestNumDeersEaten = WolfsEatDeers();
     LatestGrainStomped = WolfsStompGrain();
     numWolfStarved = (NowNumWolf - LatestNumDeersEaten * 2);
     if (numWolfStarved < 0)
         return 0;
-    cout << numWolfStarved << " wolfs died from starving..." << endl;
+    //cout << numWolfStarved << " wolfs died from starving..." << endl;
     return (-1)*numWolfStarved;
 }
 
@@ -271,7 +271,7 @@ void PrintAgents() {
 
 void PrintState() {
     PrintTime();
-    PrintFactors();
+    //PrintFactors();
     PrintAgents();
 }
 
