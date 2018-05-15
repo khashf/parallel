@@ -173,19 +173,19 @@ void PrintState() {
 }
 
 void Grain() {
-    cout << "Section [Grain] Thread [" << omp_get_thread_num() << "] - computing grain" << endl;
+    //cout << "Section [Grain] Thread [" << omp_get_thread_num() << "] - computing grain" << endl;
     float tmpGrainHeight = ComputeGrain();
     #pragma omp barrier // computing barrier
-    cout << "Section [Grain] Thread [" << omp_get_thread_num() << "] - updating grain" << endl;
+    //cout << "Section [Grain] Thread [" << omp_get_thread_num() << "] - updating grain" << endl;
     UpdateGrain(tmpGrainHeight);
     #pragma omp barrier // updating barrier
 }
 
 void Deer() {
-    cout << "Section [Deers] Thread [" << omp_get_thread_num() << "] - computing deers" << endl;
+    //cout << "Section [Deers] Thread [" << omp_get_thread_num() << "] - computing deers" << endl;
     float tmpDeers = ComputeDeers();
     #pragma omp barrier // computing barrier
-    cout << "Section [Deers] Thread [" << omp_get_thread_num() << "] - updating deers" << endl;
+    //cout << "Section [Deers] Thread [" << omp_get_thread_num() << "] - updating deers" << endl;
     UpdateDeers(tmpDeers);
     #pragma omp barrier // updating barrier
 }
@@ -193,7 +193,7 @@ void Deer() {
 void Watcher() {
     #pragma omp barrier // computing barrier
     #pragma omp barrier // updating barrier
-    cout << "Section [Watcher] Thread [" << omp_get_thread_num() << "] - printing and updating states" << endl;
+    //cout << "Section [Watcher] Thread [" << omp_get_thread_num() << "] - printing and updating states" << endl;
     PrintState();
     UpdateTime();
     UpdateFactors();
