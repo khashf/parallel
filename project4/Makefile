@@ -8,12 +8,13 @@ FLAGS=${CFLAGS} ${CXXFLAGS} ${LIB}
 SRC=grainville.cpp
 
 
-all:
-	${CC} -o ${TARGET} ${SRC} ${FLAGS}
-	${TARGET}
+all: compile run
 
-barrier:
-	${CC} -o barrier test-barrier.cpp ${FLAGS}
+compile:
+	${CC} -o ${TARGET} ${SRC} ${FLAGS}
+
+run:
+	${TARGET}
 
 clean:
 	rm -f ${TARGET}
