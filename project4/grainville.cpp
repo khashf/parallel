@@ -205,6 +205,8 @@ int main() {
     InitData();
     UpdateFactors(); // init the factor for the 1st time
     for (int iStep = 1; iStep <= NUM_STEPS; ++iStep) {
+        cout << endl << "=============================" << endl;
+        cout << "         Step " << iStep << endl << endl;
         #pragma omp parallel sections default(none) shared(NowGrainHeight, NowNumDeer)
         {
             #pragma omp section
