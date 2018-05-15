@@ -23,18 +23,18 @@ using std::cout;
  */
 
 // Agents
-const float GRAIN_GROWS_PER_MONTH = 8.0;
-const float ONE_DEER_EATS_PER_MONTH = 0.5;
+const float GRAIN_GROWS_PER_MONTH = 8.0f;
+const float ONE_DEER_EATS_PER_MONTH = 0.1f;
 
 // Conditions
-const float AVG_PRECIP_PER_MONTH = 6.0;
-const float AMP_PRECIP_PER_MONTH = 6.0;
-const float RANDOM_PRECIP = 2.0;
-const float AVG_TEMP = 50.0;
-const float AMP_TEMP = 20.0;
-const float RANDOM_TEMP = 10.0;
-const float MIDTEMP = 40.0;
-const float MIDPRECIP = 10.0;
+const float AVG_PRECIP_PER_MONTH = 6.0f;
+const float AMP_PRECIP_PER_MONTH = 6.0f;
+const float RANDOM_PRECIP = 2.0f;
+const float AVG_TEMP = 50.0f;
+const float AMP_TEMP = 20.0f;
+const float RANDOM_TEMP = 10.0f;
+const float MIDTEMP = 40.0f;
+const float MIDPRECIP = 10.0f;
 
 // Program config
 const int NUM_ARGS = 1;
