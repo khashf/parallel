@@ -68,19 +68,19 @@ float Ranf(float low, float high, unsigned int* seed) {
 }
 
 void UpdateNowTemperature() {
-    float ang = (30. * (float)NowMonth + 15.) * (M_PI / 180.);
+    float ang = (30.0f * (float)NowMonth + 15.0f) * (M_PI / 180.0f);
     float temp = AVG_TEMP - AMP_TEMP * cos(ang);
     unsigned int seed = time(NULL);
     NowTemperature = temp + Ranf(-RANDOM_TEMP, RANDOM_TEMP, &seed);
 }
 
 void UpdateNowPrecip() {
-    float ang = (30. * (float)NowMonth + 15.) * (M_PI / 180.);
+    float ang = (30.0f * (float)NowMonth + 15.0f) * (M_PI / 180.0f);
     float precip = AVG_PRECIP_PER_MONTH + AMP_PRECIP_PER_MONTH * sin(ang);
     unsigned int seed = time(NULL);
     NowPrecip = precip + Ranf(-RANDOM_PRECIP, RANDOM_PRECIP, &seed);
-    if( NowPrecip < 0.)
-        NowPrecip = 0.;
+    if( NowPrecip < 0.0f)
+        NowPrecip = 0.0f;
 }
 
 void UpdateFactors() {
@@ -98,7 +98,7 @@ void UpdateTime() {
 
 void InitData() {
     NowNumDeer = 1;
-    NowGrainHeight = 1.;
+    NowGrainHeight = 1.0f;
     NowMonth = 1;
     NowYear = 2018;
 }
@@ -134,8 +134,8 @@ float ComputeGrain() {
 
 void UpdateGrain(float tmpGrainHeight) {
     NowGrainHeight += tmpGrainHeight;
-    if (NowGrainHeight < 0)
-        NowGrainHeight = 0;
+    if (NowGrainHeight < 0.0f)
+        NowGrainHeight = 0.0f;
 }
 
 int ComputeDeers() {
