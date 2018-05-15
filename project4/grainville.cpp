@@ -124,7 +124,7 @@ float DeersEatGrain() {
     return eatenGrain;
 }
 
-float ComputeGrain() {
+float ComputeGrainStage1() {
     float grownGrain = GrainGrow();
     float eatenGrain = DeersEatGrain();
     float finalGrain = grownGrain - eatenGrain;
@@ -137,7 +137,14 @@ void UpdateGrain(float tmpGrainHeight) {
         NowGrainHeight = 0.0f;
 }
 
-int ComputeDeers() {
+void Grain() {
+    float tmpGrainHeight = ComputeGrainStage1();
+    #pragma omp barrier // computing barrier
+    UpdateGrain(tmpGrainHeight);
+    #pragma omp barrier // updating barrier
+}
+
+int ComputeDeersStage1() {
     float requiredGrain = NowNumDeer * ONE_DEER_EATS_PER_MONTH;
     float diffGrain = NowGrainHeight - requiredGrain;
     float diffDeers = diffGrain / ONE_DEER_EATS_PER_MONTH;
@@ -150,7 +157,29 @@ void UpdateDeers(int tmpDeers) {
         NowNumDeer = 0;
 }
 
-float 
+void Deer() {
+    float tmpDeers = ComputeDeersStage1();
+    #pragma omp barrier // computing barrier
+    UpdateDeers(tmpDeers);
+    #pragma omp barrier // updating barrier
+}
+
+int ComputeWolfStage1() {
+
+}
+
+void UpdateWolf(int tmpWolfs) {
+    NowNumWolf += tmpWolfs;
+    if (NowNumWolf < 0)
+        NowNumWolf = 0;    
+}
+
+void Wolf() {
+    int tmpWolfs = ComputeWolfStage1();
+    #pragma omp barrier // computing barrier
+    UpdateWolf();
+    #pragma omp barrier // updating barrier
+}
 
 void PrintTime() {
     cout << "NowMonth: " << NowMonth << endl;
@@ -171,37 +200,6 @@ void PrintState() {
     PrintTime();
     PrintFactors();
     PrintAgents();
-}
-
-void Grain() {
-    float tmpGrainHeight = ComputeGrain();
-    #pragma omp barrier // computing barrier
-    UpdateGrain(tmpGrainHeight);
-    #pragma omp barrier // updating barrier
-}
-
-void Deer() {
-    float tmpDeers = ComputeDeers();
-    #pragma omp barrier // computing barrier
-    UpdateDeers(tmpDeers);
-    #pragma omp barrier // updating barrier
-}
-
-int ComputeWolf() {
-
-}
-
-void UpdateWolf(int tmpWolfs) {
-    NowNumWolf += tmpWolfs;
-    if (NowNumWolf < 0)
-        NowNumWolf = 0;    
-}
-
-void Wolf() {
-    int tmpWolfs = ComputeWolf();
-    #pragma omp barrier // computing barrier
-    UpdateWolf();
-    #pragma omp barrier // updating barrier
 }
 
 void Watcher() {
