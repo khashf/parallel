@@ -5,10 +5,13 @@
 #include <omp.h>
 #include <time.h>
 #include <random>
+#include <fstream>
 
 using std::cerr;
 using std::endl;
 using std::cout;
+using std::ostream;
+using std::ofstream;
 
 /* 
  * To keep this simple, a year consists of 12 months of 30 days each.
@@ -253,45 +256,63 @@ void Wolf() {
     #pragma omp barrier // updating barrier 1
 }
 
-void PrintTime() {
-    cout << "NowMonth: " << NowMonth << endl;
-    cout << "NowYear: " << NowYear << endl;
+void PrintTime(ostream& out) {
+    out << "," << NowMonth;
+    out << "," << NowYear; 
 }
 
-void PrintFactors() {
-    cout << "NowTemp: " << NowTemperature << endl;
-    cout << "NowPrecip: " << NowPrecip << endl;
+float ConvertToC(float f) {
+    return (5.0f/9.0f)*(f-32.0f);
 }
 
-void PrintAgents() {
-    cout << "NowGrain: " << NowGrainHeight << endl;
-    cout << "NowDeers: " << NowNumDeer << endl;
-    cout << "NowWolfs: " << NowNumWolf << endl;
+void PrintFactors(ostream& out) {
+
+    out << "," << ConvertToC(NowTemperature);
+    out << "," << NowPrecip;
 }
 
-void PrintState() {
-    PrintTime();
-    //PrintFactors();
-    PrintAgents();
+void PrintAgents(ostream& out) {
+    out << "," << NowGrainHeight;
+    out << "," << NowNumDeer;
+    out << "," << NowNumWolf;
 }
 
-void Watcher() {
+void PrintState(ostream& out) {
+    PrintTime(out);
+    PrintFactors(out);
+    PrintAgents(out);
+}
+
+void Watcher(ostream& out) {
     #pragma omp barrier // computing barrier
     #pragma omp barrier // updating barrier
-    PrintState();
+    PrintState(out);
     UpdateTime();
     UpdateFactors();
+}
+
+void PrintHeader(ostream& out) {
+    out << "Month#, Month, Year, Temp, Precip, Grain, Deer, Wolf" << endl;
 }
 
 int main() {
     omp_set_num_threads(NUM_THREADS);
 
+    ofstream outFile;
+    const char outFilePath[] = "data.csv";
+    outFile.open(outFilePath);
+    ostream out(outFile.rdbuf());
+    //ostream out(cout.rdbuf());
+    
+    //PrintHeader(out);
+    out << "Month#, Month, Year, Temp, Precip, Grain, Deer, Wolf" << endl;
+
     InitData();
     UpdateFactors(); // init the factor for the 1st time
+
     for (int iStep = 1; iStep <= NUM_STEPS; ++iStep) {
-        cout << endl << "=============================" << endl;
-        cout << "         Step " << iStep << endl << endl;
-        #pragma omp parallel sections default(none) shared(NowGrainHeight, NowNumDeer, NowNumWolf, LatestGrainStomped, LatestNumDeersEaten)
+        out << iStep;
+        #pragma omp parallel sections default(none) shared(NowGrainHeight, NowNumDeer, NowNumWolf, LatestGrainStomped, LatestNumDeersEaten, out)
         {
             #pragma omp section
             {
@@ -307,10 +328,12 @@ int main() {
             }
             #pragma omp section
             {
-                Watcher();
+                Watcher(out);
             }
         } // omp parallel sections
+        out << endl;
     } // for NUM_STEPS
-    
+
+    outFile.close();
     return 0;
 }
