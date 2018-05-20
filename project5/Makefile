@@ -15,9 +15,9 @@ all: compile
 
 compile: compile-vec compile-novec
 compile-vec:
-	$(CC) -g -o $(TARGET_VEC) $(SRC) $(FLAGS)
+	$(CC) -DSIMD -o $(TARGET_VEC) $(SRC) $(FLAGS)
 compile-novec:
-	$(CC) -g -o $(TARGET_NOVEC) $(SRC) $(FLAGS) -no-vec
+	$(CC) -o $(TARGET_NOVEC) $(SRC) $(FLAGS) -no-vec
 
 clean: clean-vec clean-novec
 clean-vec:

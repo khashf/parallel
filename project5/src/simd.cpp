@@ -48,12 +48,12 @@ int main(int argc, char** argv) {
 
     InitData(array_size);
     double time0 = omp_get_wtime();
-    // #ifdef SIMD
-    //     #pragma omp parallel for simd default(none) shared(array_size)
-    // #else
-    //     #pragma omp parallel for default(none) shared(array_size)
-    // #endif
-    #pragma omp parallel for simd default(none) shared(array_size, A, C)
+    #ifdef SIMD
+        #pragma omp parallel for simd default(none) shared(array_size, A, C)
+    #else
+        #pragma omp parallel for default(none) shared(array_size, A, C)
+    #endif
+    //#pragma omp parallel for simd default(none) shared(array_size, A, C)
     for(int i = 0; i < array_size; i++) {
         C[i] = sqrt(A[i]);
     }
