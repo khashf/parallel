@@ -19,3 +19,5 @@ project2/nbody-static-fine
 project2/test-directives
 
 bin/
+
+*.optrpt
