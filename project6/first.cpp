@@ -35,6 +35,14 @@ int main(int argc, char *argv[]) {
     // -------------------------------------------------
     // 0. Precautionary error checking
     // -------------------------------------------------
+    if (argc != gNumProgramArgc+1) {
+        fprintf(stderr, "Number of arguments must be %d\n", gNumProgramArgc);
+        fprintf(stderr, "Usage:\n%s <global work size> <local work size>\n", argv[0]);
+        return 1;
+    }
+    gNumElements = atoi(argv[1]);
+    gLocalSize = atoi(argv[2]);
+    gNumWorkGroups = gNumElements / gLocalSize;
 
     // check if we can open the .cl code file
     // which will be use for step 7 below
