@@ -22,7 +22,12 @@
 
 const char *CL_FILE_NAME = {"first.cl"};
 const float TOL = 0.0001f;
+//int gNMB = 64;
+int gNumElements = 64 * 1024 * 1024;
+int gLocalSize = 64;
+int gNumWorkGroups;
 
+int gNumProgramArgc = 2;
 void Wait(cl_command_queue);
 int LookAtTheBits(float);
 
