@@ -50,4 +50,4 @@ GOOD
 * 
 
 # Compile
-
+Add -lOpenCL to gcc/g++ command
