@@ -1,7 +1,7 @@
 BIN_PATH=.
 TARGET=$(BIN_PATH)/first
 CC=g++
-CXXFLAGS= -std=c++11 -Wall -Wextra
+CXXFLAGS= -std=c++11
 CFLAGS=-g 
 LIB=-lm -fopenmp -lOpenCL
 FLAGS=$(CFLAGS) $(CXXFLAGS) $(LIB)
