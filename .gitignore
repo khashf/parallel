@@ -21,3 +21,5 @@ project2/test-directives
 bin/
 
 *.optrpt
+
+opencl
