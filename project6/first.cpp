@@ -4,34 +4,39 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <omp.h>
+#include <iostream>
 
 #define CL_TARGET_OPENCL_VERSION 120
 #include "CL/cl.h"
 #include "CL/cl_platform.h"
 
-#ifndef NMB
-#define NMB 64
-#endif
-#define NUM_ELEMENTS NMB * 1024 * 1024
+using std::cout;
+using std::endl;
+using std::cerr;
 
-#ifndef LOCAL_SIZE
-#define LOCAL_SIZE 64
-#endif
-
-#define NUM_WORK_GROUPS NUM_ELEMENTS / LOCAL_SIZE
+// #ifndef NMB
+// #define NMB 64
+// #endif
+// #define NUM_ELEMENTS NMB * 1024 * 1024
+//
+// #ifndef LOCAL_SIZE
+// #define LOCAL_SIZE 64
+// #endif
+//
+// #define NUM_WORK_GROUPS NUM_ELEMENTS / LOCAL_SIZE
 
 const char *CL_FILE_NAME = {"first.cl"};
 const float TOL = 0.0001f;
 //int gNMB = 64;
-int gNumElements = 64 * 1024 * 1024;
-int gLocalSize = 64;
-int gNumWorkGroups;
+long unsigned int gNumElements = 64 * 1000 * 1000;
+long unsigned int gLocalSize = 1024;
+long unsigned int gNumWorkGroups;
 
 int gNumProgramArgc = 2;
 void Wait(cl_command_queue);
 int LookAtTheBits(float);
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     // -------------------------------------------------
     // 0. Precautionary error checking
     // -------------------------------------------------
@@ -40,9 +45,12 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Usage:\n%s <global work size> <local work size>\n", argv[0]);
         return 1;
     }
-    gNumElements = atoi(argv[1]);
-    gLocalSize = atoi(argv[2]);
+    gNumElements = strtoul(argv[1], NULL, 0);
+    gLocalSize = strtoul(argv[2], NULL, 0);
     gNumWorkGroups = gNumElements / gLocalSize;
+    cout << "Global Size = " << gNumElements << endl;
+    cout << "Local Size = " << gLocalSize << endl;
+    cout << "Number of WorkGroups = " << gNumWorkGroups << endl;
 
     // check if we can open the .cl code file
     // which will be use for step 7 below
@@ -143,7 +151,7 @@ int main(int argc, char *argv[]) {
 	clProgramText[fileSize] = '\0';
 	fclose(fp);
 	if (readFileSize != fileSize)
-		fprintf(stderr, "Expected to read %d bytes read from '%s' -- actually read %d.\n", (int)fileSize, CL_FILE_NAME, readFileSize);
+		fprintf(stderr, "Expected to read %lu bytes read from '%s' -- actually read %lu.\n", fileSize, CL_FILE_NAME, readFileSize);
 
 	// create the text for the kernel program:
 	char *strings[1];
@@ -157,7 +165,8 @@ int main(int argc, char *argv[]) {
 	// 8. compile and link the kernel code:
     // -------------------------------------------------
 
-	char *options = {""};
+	//char *options = {""};
+	const char* options = static_cast<const char*>("");
 	status = clBuildProgram(program, 1, &device, options, NULL, NULL);
 	if (status != CL_SUCCESS) {
 		size_t size;
@@ -197,7 +206,7 @@ int main(int argc, char *argv[]) {
     // -------------------------------------------------
 
 	size_t globalWorkSize[3] = {gNumElements, 1, 1};
-	size_t localWorkSize[3] = {LOCAL_SIZE, 1, 1};
+	size_t localWorkSize[3] = {gLocalSize, 1, 1};
 
 	Wait(cmdQueue);
 	double time0 = omp_get_wtime();
@@ -230,8 +239,8 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	fprintf(stderr, "%8d\t%4d\t%10d\t%10.3lf GigaMultsPerSecond\n",
-			NMB, LOCAL_SIZE, NUM_WORK_GROUPS, (double)gNumElements / (time1 - time0) / 1000000000.);
+	fprintf(stderr, "GlobalSize=%8lu\tLocalSize=%4lu\tNumWorkGroups=%10lu\tPerformance=%10.3lf GigaMultsPerSecond\n",
+			gNumElements, gLocalSize, gNumWorkGroups, (double)gNumElements / (time1 - time0) / 1000000000.);
 
     // -------------------------------------------------
 	// 13. clean everything up:
