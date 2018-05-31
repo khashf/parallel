@@ -75,14 +75,14 @@ int main(int argc, char *argv[]) {
 	// 2. allocate the host memory buffers:
     // -------------------------------------------------
 
-	float *hA = new float[NUM_ELEMENTS];
-	float *hB = new float[NUM_ELEMENTS];
-	float *hC = new float[NUM_ELEMENTS];
+	float *hA = new float[gNumElements];
+	float *hB = new float[gNumElements];
+	float *hC = new float[gNumElements];
 
-	for (int i = 0; i < NUM_ELEMENTS; i++) {
+	for (int i = 0; i < gNumElements; i++) {
 		hA[i] = hB[i] = (float)sqrt((double)i);
 	}
-	size_t dataSize = NUM_ELEMENTS * sizeof(float);
+	size_t dataSize = gNumElements * sizeof(float);
 
     // -------------------------------------------------
 	// 3. create an opencl context:
@@ -196,7 +196,7 @@ int main(int argc, char *argv[]) {
 	// 11. enqueue the kernel object for execution:
     // -------------------------------------------------
 
-	size_t globalWorkSize[3] = {NUM_ELEMENTS, 1, 1};
+	size_t globalWorkSize[3] = {gNumElements, 1, 1};
 	size_t localWorkSize[3] = {LOCAL_SIZE, 1, 1};
 
 	Wait(cmdQueue);
@@ -220,7 +220,7 @@ int main(int argc, char *argv[]) {
 
 	// did it work?
 
-	for (int i = 0; i < NUM_ELEMENTS; i++) {
+	for (int i = 0; i < gNumElements; i++) {
 		float expected = hA[i] * hB[i];
 		if (fabs(hC[i] - expected) > TOL) {
 			fprintf( stderr, "%4d: %13.6f * %13.6f wrongly produced %13.6f instead of %13.6f (%13.8f)\n",
@@ -231,7 +231,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	fprintf(stderr, "%8d\t%4d\t%10d\t%10.3lf GigaMultsPerSecond\n",
-			NMB, LOCAL_SIZE, NUM_WORK_GROUPS, (double)NUM_ELEMENTS / (time1 - time0) / 1000000000.);
+			NMB, LOCAL_SIZE, NUM_WORK_GROUPS, (double)gNumElements / (time1 - time0) / 1000000000.);
 
     // -------------------------------------------------
 	// 13. clean everything up:
