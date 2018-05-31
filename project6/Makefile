@@ -10,7 +10,7 @@ SRC=$(SRC_PATH)/first.cpp
 
 all: first
 
-first:
+first: $(SRC)
 	$(CC) -o $(TARGET) $(SRC) $(FLAGS)
 
 clean:
