@@ -6,7 +6,7 @@
 #include <omp.h>
 #include <iostream>
 
-#define CL_TARGET_OPENCL_VERSION 120
+#define CL_TARGET_OPENCL_VERSION 110
 #include "CL/cl.h"
 #include "CL/cl_platform.h"
 
