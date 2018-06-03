@@ -13,10 +13,13 @@ if [ "$#" -ne 1 ]; then
 fi
 
 DATA_PATH='.'
-OUT_REDUCE="$DATA_PATH/$1-reduce.csv"
-OUT_NOREDUCE="$DATA_PATH/$1-noreduce.csv"
-BIN_REDUCE=mul-reduce
-BIN_NOREDUCE=mul-noreduce
+OUT_MULT="$DATA_PATH/$1-mult.csv"
+OUT_MULT_ADD="$DATA_PATH/$1-multadd.csv"
+OUT_MULT_REDUCE="$DATA_PATH/$1-reduce.csv"
+
+BIN_MULT=multiply
+BIN_MULT_ADD=multiply-add
+BIN_MULT_REDUCE=multiply-reduce
 
 # at least from 1K to 8M
 GLOBAL_SIZE_1=1000
@@ -39,44 +42,54 @@ LOCAL_SIZE_8=128
 LOCAL_SIZE_9=256
 LOCAL_SIZE_10=512
 LOCAL_SIZE_11=1024
+LOCAL_SIZE_CONST=32
 
-touch $OUT_REDUCE
-touch $OUT_NOREDUCE
+rm -f $OUT_MULT && touch $OUT_MULT
+rm -f $OUT_MULT_ADD && touch $OUT_MULT_ADD
+rm -f $OUT_MULT_REDUCE && touch $OUT_MULT_REDUCE
 
 i_MIN=$LOCAL_SIZE_1
 i_MAX=$LOCAL_SIZE_11
 i=$i_MIN
 
-echo "LOCAL_SIZE,$GLOBAL_SIZE_1,$GLOBAL_SIZE_2,$GLOBAL_SIZE_3,$GLOBAL_SIZE_4,$GLOBAL_SIZE_5,$GLOBAL_SIZE_6,$GLOBAL_SIZE_7" | tee $OUT_NOREDUCE $OUT_REDUCE
+echo "LOCAL_SIZE,$GLOBAL_SIZE_1,$GLOBAL_SIZE_2,$GLOBAL_SIZE_3,$GLOBAL_SIZE_4,$GLOBAL_SIZE_5,$GLOBAL_SIZE_6,$GLOBAL_SIZE_7" | tee $OUT_MULT $OUT_MULT_ADD $OUT_MULT_REDUCE
 while [ $i -le $i_MAX ]; do
-        echo -n "$i," | tee -a $OUT_NOREDUCE $OUT_REDUCE
+        echo -n "$i," | tee -a $OUT_MULT $OUT_MULT_ADD
         # Program arguments: <program name> <global size> <local size>
 
-        $BIN_NOREDUCE $GLOBAL_SIZE_1 $i | tail -n2 | head -n 1 | awk '{print $6}' | tr '\n' ',' | tee -a $OUT_NOREDUCE
-        $BIN_REDUCE $GLOBAL_SIZE_1 $i | tail -n2 | head -n 1 | awk '{print $6}' | tr '\n' ',' | tee -a $OUT_REDUCE
+        $BIN_MULT_ADD $GLOBAL_SIZE_1 $i | tail -n1 | awk '{print $3}' | tr '\n' ',' | tee -a $OUT_MULT
+        $BIN_MULT $GLOBAL_SIZE_1 $i | tail -n1 | awk '{print $3}' | tr '\n' ',' | tee -a $OUT_MULT_ADD
         
-        $BIN_NOREDUCE $GLOBAL_SIZE_2 $i | tail -n2 | head -n 1 | awk '{print $6}' | tr '\n' ',' | tee -a $OUT_NOREDUCE
-        $BIN_REDUCE $GLOBAL_SIZE_2 $i | tail -n2 | head -n 1 | awk '{print $6}' | tr '\n' ',' | tee -a $OUT_REDUCE
+        $BIN_MULT_ADD $GLOBAL_SIZE_2 $i | tail -n1 | awk '{print $3}' | tr '\n' ',' | tee -a $OUT_MULT
+        $BIN_MULT $GLOBAL_SIZE_2 $i | tail -n1 | awk '{print $3}' | tr '\n' ',' | tee -a $OUT_MULT_ADD
         
-        $BIN_NOREDUCE $GLOBAL_SIZE_3 $i | tail -n2 | head -n 1 | awk '{print $6}' | tr '\n' ',' | tee -a $OUT_NOREDUCE
-        $BIN_REDUCE $GLOBAL_SIZE_3 $i | tail -n2 | head -n 1 | awk '{print $6}' | tr '\n' ',' | tee -a $OUT_REDUCE
+        $BIN_MULT_ADD $GLOBAL_SIZE_3 $i | tail -n1 | awk '{print $3}' | tr '\n' ',' | tee -a $OUT_MULT
+        $BIN_MULT $GLOBAL_SIZE_3 $i | tail -n1 | awk '{print $3}' | tr '\n' ',' | tee -a $OUT_MULT_ADD
         
-        $BIN_NOREDUCE $GLOBAL_SIZE_4 $i | tail -n2 | head -n 1 | awk '{print $6}' | tr '\n' ',' | tee -a $OUT_NOREDUCE
-        $BIN_REDUCE $GLOBAL_SIZE_4 $i | tail -n2 | head -n 1 | awk '{print $6}' | tr '\n' ',' | tee -a $OUT_REDUCE
+        $BIN_MULT_ADD $GLOBAL_SIZE_4 $i | tail -n1 | awk '{print $3}' | tr '\n' ',' | tee -a $OUT_MULT
+        $BIN_MULT $GLOBAL_SIZE_4 $i | tail -n1 | awk '{print $3}' | tr '\n' ',' | tee -a $OUT_MULT_ADD
         
-        $BIN_NOREDUCE $GLOBAL_SIZE_5 $i | tail -n2 | head -n 1 | awk '{print $6}' | tr '\n' ',' | tee -a $OUT_NOREDUCE
-        $BIN_REDUCE $GLOBAL_SIZE_5 $i | tail -n2 | head -n 1 | awk '{print $6}' | tr '\n' ',' | tee -a $OUT_REDUCE
+        $BIN_MULT_ADD $GLOBAL_SIZE_5 $i | tail -n1 | awk '{print $3}' | tr '\n' ',' | tee -a $OUT_MULT
+        $BIN_MULT $GLOBAL_SIZE_5 $i | tail -n1 | awk '{print $3}' | tr '\n' ',' | tee -a $OUT_MULT_ADD
         
-        $BIN_NOREDUCE $GLOBAL_SIZE_6 $i | tail -n2 | head -n 1 | awk '{print $6}' | tr '\n' ',' | tee -a $OUT_NOREDUCE
-        $BIN_REDUCE $GLOBAL_SIZE_6 $i | tail -n2 | head -n 1 | awk '{print $6}' | tr '\n' ',' | tee -a $OUT_REDUCE
+        $BIN_MULT_ADD $GLOBAL_SIZE_6 $i | tail -n1 | awk '{print $3}' | tr '\n' ',' | tee -a $OUT_MULT
+        $BIN_MULT $GLOBAL_SIZE_6 $i | tail -n1 | awk '{print $3}' | tr '\n' ',' | tee -a $OUT_MULT_ADD
         
         # Last column, `tr` is different
-        $BIN_NOREDUCE $GLOBAL_SIZE_7 $i | tail -n2 | head -n 1 | awk '{print $6}' | tr -d '\n' | tee -a $OUT_NOREDUCE
-        $BIN_REDUCE $GLOBAL_SIZE_7 $i | tail -n2 | head -n 1 | awk '{print $6}' | tr -d '\n' | tee -a $OUT_REDUCE
+        $BIN_MULT_ADD $GLOBAL_SIZE_7 $i | tail -n1 | awk '{print $3}' | tr -d '\n' | tee -a $OUT_MULT
+        $BIN_MULT $GLOBAL_SIZE_7 $i | tail -n1 | awk '{print $3}' | tr -d '\n' | tee -a $OUT_MULT_ADD
 
-        echo | tee -a $OUT_NOREDUCE $OUT_REDUCE
+        echo | tee -a $OUT_MULT $OUT_MULT_ADD
         i=$(( $i * 2 ))
 done
 
-echo "Benchmarking Completed. Results are in $OUT_NOREDUCE and $OUT_REDUCE"
+$BIN_MULT_REDUCE $GLOBAL_SIZE_1 $LOCAL_SIZE_CONST | tail -n1 | awk '{print $3}' | tr '\n' ',' | tee -a $OUT_MULT_REDUCE
+$BIN_MULT_REDUCE $GLOBAL_SIZE_2 $LOCAL_SIZE_CONST | tail -n1 | awk '{print $3}' | tr '\n' ',' | tee -a $OUT_MULT_REDUCE
+$BIN_MULT_REDUCE $GLOBAL_SIZE_3 $LOCAL_SIZE_CONST | tail -n1 | awk '{print $3}' | tr '\n' ',' | tee -a $OUT_MULT_REDUCE
+$BIN_MULT_REDUCE $GLOBAL_SIZE_4 $LOCAL_SIZE_CONST | tail -n1 | awk '{print $3}' | tr '\n' ',' | tee -a $OUT_MULT_REDUCE
+$BIN_MULT_REDUCE $GLOBAL_SIZE_5 $LOCAL_SIZE_CONST | tail -n1 | awk '{print $3}' | tr '\n' ',' | tee -a $OUT_MULT_REDUCE
+$BIN_MULT_REDUCE $GLOBAL_SIZE_6 $LOCAL_SIZE_CONST | tail -n1 | awk '{print $3}' | tr '\n' ',' | tee -a $OUT_MULT_REDUCE
+$BIN_MULT_REDUCE $GLOBAL_SIZE_7 $LOCAL_SIZE_CONST | tail -n1 | awk '{print $3}' | tr -d '\n' | tee -a $OUT_MULT_REDUCE
+
+echo "Benchmarking Completed. Results are in $OUT_MULT and $OUT_MULT_ADD"
 

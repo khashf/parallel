@@ -25,7 +25,13 @@ using std::cerr;
 //
 // #define NUM_WORK_GROUPS NUM_ELEMENTS / LOCAL_SIZE
 
-const char *CL_FILE_NAME = {"first.cl"};
+#if MODE == 1
+const char *CL_FILE_NAME = {"multiply.cl"};
+#elif MODE == 2
+const char *CL_FILE_NAME = {"multiply-add.cl"};
+#else 
+const char *CL_FILE_NAME = {"multiply-reduce.cl"};
+#endif
 const float TOL = 0.0001f;
 //int gNMB = 64;
 long unsigned int gNumElements = 64 * 1000 * 1000;
@@ -86,9 +92,14 @@ int main(int argc, char* argv[]) {
 	float *hA = new float[gNumElements];
 	float *hB = new float[gNumElements];
 	float *hC = new float[gNumElements];
+#if MODE == 3 // for multiply-reduce
+	float *hD = new float[gNumWorkGroups];
+#else // for multiply and multiply-add
+	float *hD = new float[gNumElements];
+#endif
 
 	for (int i = 0; i < gNumElements; i++) {
-		hA[i] = hB[i] = (float)sqrt((double)i);
+		hA[i] = hB[i] = hC[i] = (float)sqrt((double)i);
 	}
 	size_t dataSize = gNumElements * sizeof(float);
 
@@ -120,7 +131,11 @@ int main(int argc, char* argv[]) {
 	if (status != CL_SUCCESS)
 		fprintf(stderr, "clCreateBuffer failed (2)\n");
 
-	cl_mem dC = clCreateBuffer(context, CL_MEM_WRITE_ONLY, dataSize, NULL, &status);
+	cl_mem dC = clCreateBuffer(context, CL_MEM_READ_ONLY, dataSize, NULL, &status);
+	if (status != CL_SUCCESS)
+		fprintf(stderr, "clCreateBuffer failed (2)\n");
+
+	cl_mem dD = clCreateBuffer(context, CL_MEM_WRITE_ONLY, dataSize, NULL, &status);
 	if (status != CL_SUCCESS)
 		fprintf(stderr, "clCreateBuffer failed (3)\n");
 
@@ -134,6 +149,10 @@ int main(int argc, char* argv[]) {
 		fprintf(stderr, "clEnqueueWriteBuffer failed (1)\n");
 
 	status = clEnqueueWriteBuffer(cmdQueue, dB, CL_FALSE, 0, dataSize, hB, 0, NULL, NULL);
+	if (status != CL_SUCCESS)
+		fprintf(stderr, "clEnqueueWriteBuffer failed (2)\n");
+
+	status = clEnqueueWriteBuffer(cmdQueue, dC, CL_FALSE, 0, dataSize, hC, 0, NULL, NULL);
 	if (status != CL_SUCCESS)
 		fprintf(stderr, "clEnqueueWriteBuffer failed (2)\n");
 
@@ -181,7 +200,13 @@ int main(int argc, char* argv[]) {
 	// 9. create the kernel object:
     // -------------------------------------------------
 
+#if MODE == 1
 	cl_kernel kernel = clCreateKernel(program, "ArrayMult", &status);
+#elif MODE == 2
+	cl_kernel kernel = clCreateKernel(program, "ArrayMultAdd", &status);
+#else 
+	cl_kernel kernel = clCreateKernel(program, "ArrayMultReduce", &status);
+#endif
 	if (status != CL_SUCCESS)
 		fprintf(stderr, "clCreateKernel failed\n");
 
@@ -199,7 +224,21 @@ int main(int argc, char* argv[]) {
 
 	status = clSetKernelArg(kernel, 2, sizeof(cl_mem), &dC);
 	if (status != CL_SUCCESS)
+		fprintf(stderr, "clSetKernelArg failed (2)\n");
+
+#if MODE == 3
+	status = clSetKernelArg(kernel, 3, gLocalSize * sizeof(float), NULL);
+	if (status != CL_SUCCESS)
+		fprintf(stderr, "clSetKernelArg failed (2)\n");
+	status = clSetKernelArg(kernel, 4, sizeof(cl_mem), &dD);
+	if (status != CL_SUCCESS)
 		fprintf(stderr, "clSetKernelArg failed (3)\n");
+#else 
+	status = clSetKernelArg(kernel, 3, sizeof(cl_mem), &dD);
+	if (status != CL_SUCCESS)
+		fprintf(stderr, "clSetKernelArg failed (3)\n");
+#endif
+
 
     // -------------------------------------------------
 	// 11. enqueue the kernel object for execution:
@@ -210,7 +249,7 @@ int main(int argc, char* argv[]) {
 
 	Wait(cmdQueue);
 	double time0 = omp_get_wtime();
-	time0 = omp_get_wtime();
+	//time0 = omp_get_wtime();
 
 	status = clEnqueueNDRangeKernel(cmdQueue, kernel, 1, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL);
 	if (status != CL_SUCCESS)
@@ -223,24 +262,58 @@ int main(int argc, char* argv[]) {
 	// 12. read the results buffer back from the device to the host:
     // -------------------------------------------------
 
-	status = clEnqueueReadBuffer(cmdQueue, dC, CL_TRUE, 0, dataSize, hC, 0, NULL, NULL);
+    double sum = 0.0;
+#if MODE == 3
+	status = clEnqueueReadBuffer(cmdQueue, dD, CL_TRUE, 0, gNumWorkGroups*sizeof(float), hD, 0, NULL, NULL);
 	if (status != CL_SUCCESS)
 		fprintf(stderr, "clEnqueueReadBuffer failed\n");
+#else
+	status = clEnqueueReadBuffer(cmdQueue, dD, CL_TRUE, 0, dataSize, hD, 0, NULL, NULL);
+	if (status != CL_SUCCESS)
+		fprintf(stderr, "clEnqueueReadBuffer failed\n");
+    Wait(cmdQueue);
+    for (int i = 0; i < gNumWorkGroups; ++i) {
+        sum += hD[i];
+    }
+#endif
 
 	// did it work?
+// #if MODE == 1
+//     for (int i = 0; i < gNumElements; i++) {
+//         float expected = hA[i] * hB[i];
+//         if (fabs(hD[i] - expected) > TOL) {
+//             fprintf(stderr, "%4d: %13.6f * %13.6f wrongly produced %13.6f instead of %13.6f (%13.8f)\n",
+//                      i, hA[i], hB[i], hD[i], expected, fabs(hD[i]-expected));
+//             fprintf(stderr, "%4d:    0x%08x *    0x%08x wrongly produced    0x%08x instead of    0x%08x\n",
+//                      i, LookAtTheBits(hA[i]), LookAtTheBits(hB[i]), LookAtTheBits(hD[i]), LookAtTheBits(expected));
+//         }
+//     }
+// #elif MODE == 2
+//     for (int i = 0; i < gNumElements; i++) {
+//         float expected = hA[i] * hB[i] + hC[i];
+//         if (fabs(hD[i] - expected) > TOL) {
+//             fprintf(stderr, "%4d: %13.6f * %13.6f + %13.6f wrongly produced %13.6f instead of %13.6f (%13.8f)\n",
+//                      i, hA[i], hB[i], hC[i], hD[i], expected, fabs(hD[i]-expected));
+//             fprintf(stderr, "%4d:    0x%08x *    0x%08x +    0x%08x wrongly produced    0x%08x instead of    0x%08x\n",
+//                      i, LookAtTheBits(hA[i]), LookAtTheBits(hB[i]), LookAtTheBits(hC[i]), LookAtTheBits(hD[i]), LookAtTheBits(expected));
+//         }
+//     }
+// #else
+//     float* tmpExpected = new float[gNumElements];
+//     double expected = 0.0;
+//     for (int i = 0; i < gNumElements; ++i) {
+//         tmpExpected[i] = hA[i] * hB[i];
+//         expected += static_cast<double>(tmpExpected[i]);
+//     }
+//     if (fabs(sum - expected) > TOL) {
+//         fprintf(stderr, "wrongly produced %13.6f instead of %13.6f (%13.8f)\n",
+//                  sum, expected, fabs(sum-expected));
+//     }
+//     delete[] tmpExpected;
+// #endif
 
-	for (int i = 0; i < gNumElements; i++) {
-		float expected = hA[i] * hB[i];
-		if (fabs(hC[i] - expected) > TOL) {
-			fprintf( stderr, "%4d: %13.6f * %13.6f wrongly produced %13.6f instead of %13.6f (%13.8f)\n",
-			         i, hA[i], hB[i], hC[i], expected, fabs(hC[i]-expected) );
-			fprintf( stderr, "%4d:    0x%08x *    0x%08x wrongly produced    0x%08x instead of    0x%08x\n",
-			         i, LookAtTheBits(hA[i]), LookAtTheBits(hB[i]), LookAtTheBits(hC[i]), LookAtTheBits(expected) );
-		}
-	}
-
-	fprintf(stderr, "GlobalSize=%8lu\tLocalSize=%4lu\tNumWorkGroups=%10lu\tPerformance=%10.3lf GigaMultsPerSecond\n",
-			gNumElements, gLocalSize, gNumWorkGroups, (double)gNumElements / (time1 - time0) / 1000000000.);
+	fprintf(stdout, "Performance = %8.3lf GigaMultsPerSecond\n",
+			(double)gNumElements / (time1 - time0) / 1000000000.);
 
     // -------------------------------------------------
 	// 13. clean everything up:
@@ -252,10 +325,12 @@ int main(int argc, char* argv[]) {
 	clReleaseMemObject(dA);
 	clReleaseMemObject(dB);
 	clReleaseMemObject(dC);
+	clReleaseMemObject(dD);
 
 	delete[] hA;
 	delete[] hB;
 	delete[] hC;
+	delete[] hD;
 
 	return 0;
 }
