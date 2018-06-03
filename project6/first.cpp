@@ -48,9 +48,9 @@ int main(int argc, char* argv[]) {
     gNumElements = strtoul(argv[1], NULL, 0);
     gLocalSize = strtoul(argv[2], NULL, 0);
     gNumWorkGroups = gNumElements / gLocalSize;
-    cout << "Global Size = " << gNumElements << endl;
-    cout << "Local Size = " << gLocalSize << endl;
-    cout << "Number of WorkGroups = " << gNumWorkGroups << endl;
+    // cout << "Global Size = " << gNumElements;
+    // cout << " Local Size = " << gLocalSize;
+    // cout << " Number of WorkGroups = " << gNumWorkGroups << endl;
 
     // check if we can open the .cl code file
     // which will be use for step 7 below
