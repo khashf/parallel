@@ -42,6 +42,9 @@ int gNumProgramArgc = 2;
 void Wait(cl_command_queue);
 int LookAtTheBits(float);
 
+
+void print_cl_error(cl_int e, const char* prefix);
+
 int main(int argc, char* argv[]) {
     // -------------------------------------------------
     // 0. Precautionary error checking
@@ -252,8 +255,10 @@ int main(int argc, char* argv[]) {
 	//time0 = omp_get_wtime();
 
 	status = clEnqueueNDRangeKernel(cmdQueue, kernel, 1, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL);
-	if (status != CL_SUCCESS)
-		fprintf(stderr, "clEnqueueNDRangeKernel failed: %d\n", status);
+    print_cl_error(status, "clEnqueueNDRangeKernel");
+    //PrintCLError(status, "", stderr);
+	// if (status != CL_SUCCESS)
+	//     fprintf(stderr, "clEnqueueNDRangeKernel failed: %d\n", status);
 
 	Wait(cmdQueue);
 	double time1 = omp_get_wtime();
