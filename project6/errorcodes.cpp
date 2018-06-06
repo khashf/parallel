@@ -8,13 +8,15 @@ void PrintCLError( cl_int, char * = "", FILE * = stderr );
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
-#include "cl.h"
+#define CL_TARGET_OPENCL_VERSION 110
+#include "CL/cl.h"
+#include "CL/cl_platform.h"
 
 
 struct errorcode
 {
-	cl_int		statusCode;
-	char *		meaning;
+	cl_int statusCode;
+	char* meaning;
 }
 ErrorCodes[ ] =
 {
