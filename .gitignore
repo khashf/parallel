@@ -23,3 +23,9 @@ bin/
 *.optrpt
 
 opencl
+
+project6/multiply
+
+project6/multiply-add
+
+project6/multiply-reduce
