@@ -312,7 +312,7 @@ int main(int argc, char* argv[]) {
 //     delete[] tmpExpected;
 // #endif
 
-	fprintf(stdout, "Performance = %8.3lf GigaMultsPerSecond\n",
+	fprintf(stdout, "%8.3lf\n",
 			(double)gNumElements / (time1 - time0) / 1000000000.);
 
     // -------------------------------------------------
