@@ -354,3 +354,75 @@ void Wait(cl_command_queue queue) {
 	if (status != CL_SUCCESS)
 		fprintf(stderr, "Wait: clWaitForEvents failed\n");
 }
+
+// Modified from a useful helper function
+// from Professor Andreas Kloeckner at UIUC ([link](https://github.com/hpc12/tools))
+void print_cl_error(cl_int e, const char* prefix) {
+  if (e == CL_SUCCESS)
+      return;
+  cerr << prefix << ": " << "error code = " << e << " ";
+  switch (e)   {
+    //case CL_SUCCESS: break; // cerr << "success | ";
+    case CL_DEVICE_NOT_FOUND: cerr << "device not found | ";
+    case CL_DEVICE_NOT_AVAILABLE: cerr << "device not available | ";
+#if !(defined(CL_PLATFORM_NVIDIA) && CL_PLATFORM_NVIDIA == 0x3001)
+    case CL_COMPILER_NOT_AVAILABLE: cerr << "device compiler not available | ";
+#endif
+    case CL_MEM_OBJECT_ALLOCATION_FAILURE: cerr << "mem object allocation failure | ";
+    case CL_OUT_OF_RESOURCES: cerr << "out of resources | ";
+    case CL_OUT_OF_HOST_MEMORY: cerr << "out of host memory | ";
+    case CL_PROFILING_INFO_NOT_AVAILABLE: cerr << "profiling info not available | ";
+    case CL_MEM_COPY_OVERLAP: cerr << "mem copy overlap | ";
+    case CL_IMAGE_FORMAT_MISMATCH: cerr << "image format mismatch | ";
+    case CL_IMAGE_FORMAT_NOT_SUPPORTED: cerr << "image format not supported | ";
+    case CL_BUILD_PROGRAM_FAILURE: cerr << "build program failure | ";
+    case CL_MAP_FAILURE: cerr << "map failure | ";
+
+    case CL_INVALID_VALUE: cerr << "invalid value | ";
+    case CL_INVALID_DEVICE_TYPE: cerr << "invalid device type | ";
+    case CL_INVALID_PLATFORM: cerr << "invalid platform | ";
+    case CL_INVALID_DEVICE: cerr << "invalid device | ";
+    case CL_INVALID_CONTEXT: cerr << "invalid context | ";
+    case CL_INVALID_QUEUE_PROPERTIES: cerr << "invalid queue properties | ";
+    case CL_INVALID_COMMAND_QUEUE: cerr << "invalid command queue | ";
+    case CL_INVALID_HOST_PTR: cerr << "invalid host ptr | ";
+    case CL_INVALID_MEM_OBJECT: cerr << "invalid mem object | ";
+    case CL_INVALID_IMAGE_FORMAT_DESCRIPTOR: cerr << "invalid image format descriptor | ";
+    case CL_INVALID_IMAGE_SIZE: cerr << "invalid image size | ";
+    case CL_INVALID_SAMPLER: cerr << "invalid sampler | ";
+    case CL_INVALID_BINARY: cerr << "invalid binary | ";
+    case CL_INVALID_BUILD_OPTIONS: cerr << "invalid build options | ";
+    case CL_INVALID_PROGRAM: cerr << "invalid program | ";
+    case CL_INVALID_PROGRAM_EXECUTABLE: cerr << "invalid program executable | ";
+    case CL_INVALID_KERNEL_NAME: cerr << "invalid kernel name | ";
+    case CL_INVALID_KERNEL_DEFINITION: cerr << "invalid kernel definition | ";
+    case CL_INVALID_KERNEL: cerr << "invalid kernel | ";
+    case CL_INVALID_ARG_INDEX: cerr << "invalid arg index | ";
+    case CL_INVALID_ARG_VALUE: cerr << "invalid arg value | ";
+    case CL_INVALID_ARG_SIZE: cerr << "invalid arg size | ";
+    case CL_INVALID_KERNEL_ARGS: cerr << "invalid kernel args | ";
+    case CL_INVALID_WORK_DIMENSION: cerr << "invalid work dimension | ";
+    case CL_INVALID_WORK_GROUP_SIZE: cerr << "invalid work group size | ";
+    case CL_INVALID_WORK_ITEM_SIZE: cerr << "invalid work item size | ";
+    case CL_INVALID_GLOBAL_OFFSET: cerr << "invalid global offset | ";
+    case CL_INVALID_EVENT_WAIT_LIST: cerr << "invalid event wait list | ";
+    case CL_INVALID_EVENT: cerr << "invalid event | ";
+    case CL_INVALID_OPERATION: cerr << "invalid operation | ";
+    case CL_INVALID_GL_OBJECT: cerr << "invalid gl object | ";
+    case CL_INVALID_BUFFER_SIZE: cerr << "invalid buffer size | ";
+    case CL_INVALID_MIP_LEVEL: cerr << "invalid mip level | ";
+
+#if defined(cl_khr_gl_sharing) && (cl_khr_gl_sharing >= 1)
+    case CL_INVALID_GL_SHAREGROUP_REFERENCE_KHR: cerr << "invalid gl sharegroup reference number | ";
+#endif
+
+#ifdef CL_VERSION_1_1
+    case CL_MISALIGNED_SUB_BUFFER_OFFSET: cerr << "misaligned sub-buffer offset | ";
+    case CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST: cerr << "exec status error for events in wait list | ";
+    case CL_INVALID_GLOBAL_WORK_SIZE: cerr << "invalid global work size | ";
+#endif
+
+    default: cerr << "invalid/unknown error code | ";
+  }
+  //cerr << "| ";
+}
