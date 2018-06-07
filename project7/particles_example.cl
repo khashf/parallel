@@ -27,6 +27,7 @@ IsInsideSphere( point p, sphere s )
 	return  ( r < s.w );
 }
 
+
 kernel
 void
 Particle( global point *dPobj, global vector *dVel, global color *dCobj )
@@ -39,23 +40,42 @@ Particle( global point *dPobj, global vector *dVel, global color *dCobj )
 
 	point  p = dPobj[gid];
 	vector v = dVel[gid];
+	color c = dCobj[gid];
 
 	point  pp = p + v*DT + (float4)(.5*DT*DT)*G;
 	vector vp = v + G*DT;
+
+	/*c.x = pp.x;
+	c.y = pp.y;
+	c.z = pp.z;
+	c.w = 1.;*/
+
+	c.x = vp.x + pp.x;
+	c.y = vp.y + pp.y;
+	c.z = vp.z + pp.z;
+	c.w = 1.;
+
 	pp.w = 1.;
 	vp.w = 0.;
 
-	if( IsInsideSphere( pp, Sphere1 ) )
-	{
+	if( IsInsideSphere( pp, Sphere1 ) ) {
 		vp = BounceSphere( p, v, Sphere1 );
 		pp = p + vp*DT + (float4)(.5*DT*DT)*G;
+		c.x = 0.0f;
+		c.y = 0.0f;
+		c.z = 0.9f;
+		c.w = 1.;
 	}
-	if (IsInsideSphere(pp, Sphere2))
-	{
+	if (IsInsideSphere(pp, Sphere2)) {
 		vp = BounceSphere(p, v, Sphere2);
 		pp = p + vp * DT + (float4)(.5*DT*DT)*G;
+		c.x = 0.9f;
+		c.y = 0.0f;
+		c.z = 0.0f;
+		c.w = 1.;
 	}
 
 	dPobj[gid] = pp;
 	dVel[gid]  = vp;
+	dCobj[gid] = c;
 }

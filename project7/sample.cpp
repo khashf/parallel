@@ -248,6 +248,11 @@ void ResetParticles() {
 		colors[i].g = Ranf(.3f, 1.);
 		colors[i].b = Ranf(.3f, 1.);
 		colors[i].a = 1.;
+
+		/*colors[i].r = 0.0f;
+		colors[i].g = 0.9f;
+		colors[i].b = 0.0f;
+		colors[i].a = 1.;*/
 	}
 	glUnmapBuffer(GL_ARRAY_BUFFER);
 
@@ -587,7 +592,7 @@ void InitLists() {
 	
 	glPushMatrix();
 
-	glColor3f(.9f, 0., .9f);
+	glColor3f(.9f, .9f, .9f);
 	glTranslatef(-100., -3000., 0.);
 	glutSolidSphere(2000., 100., 100.);
 	
@@ -1132,9 +1137,7 @@ void InitCL() {
 
 #define TOP	2147483647.		// 2^31 - 1	
 
-float
-Ranf(float low, float high)
-{
+float Ranf(float low, float high) {
 	long random();		// returns integer 0 - TOP
 
 	float r = (float)rand();
