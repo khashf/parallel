@@ -1,3 +1,15 @@
+//	interface from a sample OpenGL / GLUT program
+//
+//	The objective is to draw a 3d object and change the color of the axes
+//		with a glut menu
+//
+//	The left mouse button does rotation
+//	The middle mouse button does scaling
+//	To reset the animation, press "r"
+//	To quit, press ESC or "q"
+//
+//	Author:			Joe Graphics, Khuong Luu
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -20,29 +32,26 @@
 #include <CL/cl.h>
 #include <CL/cl_gl.h>
 
-
-struct xyzw
-{
+struct xyzw {
 	float x, y, z, w;
 };
 
-struct rgba
-{
+struct rgba {
 	float r, g, b, a;
 };
 
-GLuint			hPobj;
-GLuint			hCobj;
-cl_mem			dPobj;
-cl_mem			dCobj;
-struct xyzw *	hVel;
-cl_mem			dVel;
-cl_command_queue	CmdQueue;
-cl_device_id		Device;
-cl_kernel		Kernel;
-cl_platform_id		Platform;
-cl_program		Program;
-cl_platform_id		PlatformID;
+GLuint hPobj;
+GLuint hCobj;
+cl_mem dPobj;
+cl_mem dCobj;
+struct xyzw* hVel;
+cl_mem dVel;
+cl_command_queue CmdQueue;
+cl_device_id Device;
+cl_kernel Kernel;
+cl_platform_id Platform;
+cl_program Program;
+cl_platform_id PlatformID;
 
 const GLfloat AXES_COLOR[] = { 1., .5, 0. };
 const float XMIN = { -100.0 };
@@ -59,113 +68,53 @@ const int LOCAL_SIZE = 32;
 const char *CL_FILE_NAME = { "particles_example.cl" };
 const char *CL_BINARY_NAME = { "particles.nv" };
 
-double	ElapsedTime;
-int		ShowPerformance;
+double ElapsedTime;
+int	ShowPerformance;
 
 size_t GlobalWorkSize[3] = { NUM_PARTICLES, 1, 1 };
 size_t LocalWorkSize[3] = { LOCAL_SIZE,    1, 1 };
 
-
-
-//	interface from a sample OpenGL / GLUT program
-//
-//	The objective is to draw a 3d object and change the color of the axes
-//		with a glut menu
-//
-//	The left mouse button does rotation
-//	The middle mouse button does scaling
-//	To reset the animation, press "r"
-//	To quit, press ESC or "q"
-//
-//	Author:			Joe Graphics
-
-// NOTE: There are a lot of good reasons to use const variables instead
-// of #define's.  However, Visual C++ does not allow a const variable
-// to be used as an array size or as the case in a switch( ) statement.  So in
-// the following, all constants are const variables except those which need to
-// be array sizes or cases in switch( ) statements.  Those are #defines.
-
-
-// title of these windows:
-
-const char *WINDOWTITLE = { "OpenGL / GLUT Sample -- Joe Graphics" };
+const char *WINDOWTITLE = { "OpenGL - OpenCL Interpolation Example" };
 const char *GLUITITLE   = { "User Interface Window" };
-
-
-// what the glui package defines as true and false:
-
 const int GLUITRUE  = { true  };
 const int GLUIFALSE = { false };
-
-
-// the escape key:
-
 #define ESCAPE		0x1b
-
-
-// initial window size:
-
-const int INIT_WINDOW_SIZE = { 600 };
-
-
-// size of the box:
-
+const int INIT_WINDOW_SIZE = { 1200 };
 const float BOXSIZE = { 2.f };
-
-
 
 // multiplication factors for input interaction:
 //  (these are known from previous experience)
-
 const float ANGFACT = { 1. };
 const float SCLFACT = { 0.005f };
 
-
 // minimum allowable scale factor:
-
 const float MINSCALE = { 0.05f };
 
-
 // active mouse buttons (or them together):
-
 const int LEFT   = { 4 };
 const int MIDDLE = { 2 };
 const int RIGHT  = { 1 };
 
-
 // which projection:
-
-enum Projections
-{
+enum Projections {
 	ORTHO,
 	PERSP
 };
 
-
 // which button:
-
-enum ButtonVals
-{
+enum ButtonVals {
 	RESET,
 	QUIT
 };
 
-
 // window background color (rgba):
-
-const GLfloat BACKCOLOR[ ] = { 0., 0., 0., 1. };
-
+const GLfloat BACKCOLOR[ ] = { 0., 0., 0., 1. }; // black
 
 // line width for the axes:
-
 const GLfloat AXES_WIDTH   = { 3. };
 
-
-// the color numbers:
-// this order must match the radio button order
-
-enum Colors
-{
+// color number must match the radio button order
+enum Colors {
 	RED,
 	YELLOW,
 	GREEN,
@@ -176,8 +125,7 @@ enum Colors
 	BLACK
 };
 
-char * ColorNames[ ] =
-{
+char * ColorNames[ ] = {
 	"Red",
 	"Yellow",
 	"Green",
@@ -189,11 +137,9 @@ char * ColorNames[ ] =
 };
 
 
-// the color definitions:
+// the color definitions
 // this order must match the menu order
-
-const GLfloat Colors[ ][3] = 
-{
+const GLfloat Colors[ ][3] = {
 	{ 1., 0., 0. },		// red
 	{ 1., 1., 0. },		// yellow
 	{ 0., 1., 0. },		// green
@@ -204,19 +150,14 @@ const GLfloat Colors[ ][3] =
 	{ 0., 0., 0. },		// black
 };
 
-
 // fog parameters:
-
-const GLfloat FOGCOLOR[4] = { .0, .0, .0, 1. };
+const GLfloat FOGCOLOR[4] = { .0, .0, .0, 1. }; // black
 const GLenum  FOGMODE     = { GL_LINEAR };
 const GLfloat FOGDENSITY  = { 0.30f };
 const GLfloat FOGSTART    = { 1.5 };
 const GLfloat FOGEND      = { 4. };
 
-
-
 // non-constant global variables:
-
 int		ActiveButton;			// current button that is down
 GLuint	AxesList;				// list to hold the axes
 int		AxesOn;					// != 0 means to draw the axes
@@ -241,7 +182,6 @@ int	Paused;
 cl_uint status;
 
 // function prototypes:
-
 void	Animate( );
 void	Display( );
 void	DoAxesMenu( int );
@@ -273,12 +213,7 @@ void	Quit();
 float	Ranf(float, float);
 void	ResetParticles();
 
-
-// main program:
-
-int
-main( int argc, char *argv[ ] )
-{
+int main(int argc, char *argv[]) {
 	glutInit(&argc, argv);
 	InitGraphics();
 	InitLists();
@@ -286,21 +221,17 @@ main( int argc, char *argv[ ] )
 	Reset();
 	InitMenus();
 	glutSetWindow(MainWindow);
-	glutMainLoop();
 
-	// this is here to make the compiler happy:
+	glutMainLoop();
 
 	return 0;
 }
 
 
-void
-ResetParticles()
-{
+void ResetParticles() {
 	glBindBuffer(GL_ARRAY_BUFFER, hPobj);
 	struct xyzw *points = (struct xyzw *) glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
-	for (int i = 0; i < NUM_PARTICLES; i++)
-	{
+	for (int i = 0; i < NUM_PARTICLES; i++) {
 		points[i].x = Ranf(XMIN, XMAX);
 		points[i].y = Ranf(YMIN, YMAX);
 		points[i].z = Ranf(ZMIN, ZMAX);
@@ -308,11 +239,9 @@ ResetParticles()
 	}
 	glUnmapBuffer(GL_ARRAY_BUFFER);
 
-
 	glBindBuffer(GL_ARRAY_BUFFER, hCobj);
 	struct rgba *colors = (struct rgba *) glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
-	for (int i = 0; i < NUM_PARTICLES; i++)
-	{
+	for (int i = 0; i < NUM_PARTICLES; i++) {
 		colors[i].r = Ranf(.3f, 1.);
 		colors[i].g = Ranf(.3f, 1.);
 		colors[i].b = Ranf(.3f, 1.);
@@ -320,28 +249,19 @@ ResetParticles()
 	}
 	glUnmapBuffer(GL_ARRAY_BUFFER);
 
-
-	for (int i = 0; i < NUM_PARTICLES; i++)
-	{
+	for (int i = 0; i < NUM_PARTICLES; i++) {
 		hVel[i].x = Ranf(VMIN, VMAX);
 		hVel[i].y = Ranf(0., VMAX);
 		hVel[i].z = Ranf(VMIN, VMAX);
 	}
 }
 
-
-
-
 // this is where one would put code that is to be called
-// everytime the glut main loop has nothing to do
-//
+// everytime the glut main loop has nothing to do.
 // this is typically where animation parameters are set
-//
-// do not call Display( ) from here -- let glutMainLoop( ) do it
+// do not call Display() from here -- let glutMainLoop() do it
 
-void
-Animate()
-{
+void Animate() {
 	cl_int  status;
 	double time0, time1;
 
@@ -358,14 +278,12 @@ Animate()
 	if (ShowPerformance)
 		time0 = omp_get_wtime();
 
-	// 11. enqueue the Kernel object for execution:
-
+	// enqueue the Kernel object for execution:
 	cl_event wait;
 	status = clEnqueueNDRangeKernel(CmdQueue, Kernel, 1, NULL, GlobalWorkSize, LocalWorkSize, 0, NULL, &wait);
 	PrintCLError(status, "clEnqueueNDRangeKernel: ");
 
-	if (ShowPerformance)
-	{
+	if (ShowPerformance) {
 		status = clWaitForEvents(1, &wait);
 		PrintCLError(status, "clWaitForEvents: ");
 		time1 = omp_get_wtime();
@@ -383,11 +301,8 @@ Animate()
 }
 
 
-// draw the complete scene:
-
-void
-Display()
-{
+// draw the complete scene
+void Display() {
 	glutSetWindow(MainWindow);
 	glDrawBuffer(GL_BACK);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -399,7 +314,6 @@ Display()
 	GLint xl = (vx - v) / 2;
 	GLint yb = (vy - v) / 2;
 	glViewport(xl, yb, v, v);
-
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -429,7 +343,7 @@ Display()
 		glCallList(AxesList);
 
 	// ****************************************
-	// Here is where you draw the current state of the particles:
+	// Draw the current state of the particles:
 	// ****************************************
 
 	glBindBuffer(GL_ARRAY_BUFFER, hPobj);
@@ -450,8 +364,7 @@ Display()
 
 	glCallList(SphereList);
 
-	if (ShowPerformance)
-	{
+	if (ShowPerformance) {
 		char str[128];
 		sprintf(str, "%6.1f GigaParticles/Sec", (float)NUM_PARTICLES / ElapsedTime / 1000000000.);
 		glDisable(GL_DEPTH_TEST);
@@ -468,75 +381,45 @@ Display()
 	glFlush();
 }
 
-
-
-void
-DoAxesMenu( int id )
-{
+void DoAxesMenu(int id) {
 	AxesOn = id;
-
 	glutSetWindow( MainWindow );
 	glutPostRedisplay( );
 }
 
-
-void
-DoColorMenu( int id )
-{
+void DoColorMenu(int id) {
 	WhichColor = id - RED;
-
 	glutSetWindow( MainWindow );
 	glutPostRedisplay( );
 }
 
-
-void
-DoDebugMenu( int id )
-{
+void DoDebugMenu(int id) {
 	DebugOn = id;
-
 	glutSetWindow( MainWindow );
 	glutPostRedisplay( );
 }
 
-
-void
-DoDepthBufferMenu( int id )
-{
+void DoDepthBufferMenu(int id) {
 	DepthBufferOn = id;
-
 	glutSetWindow( MainWindow );
 	glutPostRedisplay( );
 }
 
-
-void
-DoDepthFightingMenu( int id )
-{
+void DoDepthFightingMenu(int id) {
 	DepthFightingOn = id;
-
 	glutSetWindow( MainWindow );
 	glutPostRedisplay( );
 }
 
-
-void
-DoDepthMenu( int id )
-{
+void DoDepthMenu(int id) {
 	DepthCueOn = id;
-
 	glutSetWindow( MainWindow );
 	glutPostRedisplay( );
 }
-
 
 // main menu callback:
-
-void
-DoMainMenu( int id )
-{
-	switch( id )
-	{
+void DoMainMenu(int id) {
+	switch(id) {
 		case RESET:
 			Reset( );
 			break;
@@ -554,81 +437,52 @@ DoMainMenu( int id )
 		default:
 			fprintf( stderr, "Don't know what to do with Main Menu ID %d\n", id );
 	}
-
 	glutSetWindow( MainWindow );
 	glutPostRedisplay( );
 }
 
-
-void
-DoProjectMenu( int id )
-{
+void DoProjectMenu(int id) {
 	WhichProjection = id;
-
 	glutSetWindow( MainWindow );
 	glutPostRedisplay( );
 }
-
 
 // use glut to display a string of characters using a raster font:
-
-void
-DoRasterString( float x, float y, float z, char *s )
-{
+void DoRasterString(float x, float y, float z, char *s) {
 	glRasterPos3f( (GLfloat)x, (GLfloat)y, (GLfloat)z );
-
-	char c;			// one character to print
-	for( ; ( c = *s ) != '\0'; s++ )
-	{
+	char c;	// one character to print
+	for(; ( c = *s ) != '\0'; s++) {
 		glutBitmapCharacter( GLUT_BITMAP_TIMES_ROMAN_24, c );
 	}
 }
 
-
 // use glut to display a string of characters using a stroke font:
-
-void
-DoStrokeString( float x, float y, float z, float ht, char *s )
-{
-	glPushMatrix( );
-		glTranslatef( (GLfloat)x, (GLfloat)y, (GLfloat)z );
-		float sf = ht / ( 119.05f + 33.33f );
-		glScalef( (GLfloat)sf, (GLfloat)sf, (GLfloat)sf );
-		char c;			// one character to print
-		for( ; ( c = *s ) != '\0'; s++ )
-		{
-			glutStrokeCharacter( GLUT_STROKE_ROMAN, c );
-		}
-	glPopMatrix( );
+void DoStrokeString(float x, float y, float z, float ht, char *s) {
+	glPushMatrix();
+	glTranslatef( (GLfloat)x, (GLfloat)y, (GLfloat)z );
+	float sf = ht / ( 119.05f + 33.33f );
+	glScalef( (GLfloat)sf, (GLfloat)sf, (GLfloat)sf );
+	char c;			// one character to print
+	for( ; ( c = *s ) != '\0'; s++ ) {
+		glutStrokeCharacter( GLUT_STROKE_ROMAN, c );
+	}
+	glPopMatrix();
 }
-
 
 // return the number of seconds since the start of the program:
 
-float
-ElapsedSeconds( )
-{
-	// get # of milliseconds since the start of the program:
-
+float ElapsedSeconds() {
 	int ms = glutGet( GLUT_ELAPSED_TIME );
-
-	// convert it to seconds:
-
 	return (float)ms / 1000.f;
 }
 
-
 // initialize the glui window:
-
-void
-InitMenus( )
-{
+void InitMenus() {
 	glutSetWindow( MainWindow );
 
 	int numColors = sizeof( Colors ) / ( 3*sizeof(int) );
 	int colormenu = glutCreateMenu( DoColorMenu );
-	for( int i = 0; i < numColors; i++ )
-	{
+	for( int i = 0; i < numColors; i++ ) {
 		glutAddMenuEntry( ColorNames[i], i );
 	}
 
@@ -668,7 +522,6 @@ InitMenus( )
 	glutAddMenuEntry( "Quit",          QUIT );
 
 // attach the pop-up menu to the right mouse button:
-
 	glutAttachMenu( GLUT_RIGHT_BUTTON );
 }
 
@@ -676,10 +529,7 @@ InitMenus( )
 
 // initialize the glut and OpenGL libraries:
 //	also setup display lists and callback functions
-
-void
-InitGraphics()
-{
+void InitGraphics() {
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
 	glutInitWindowPosition(0, 0);
 	glutInitWindowSize(INIT_WINDOW_SIZE, INIT_WINDOW_SIZE);
@@ -690,7 +540,6 @@ InitGraphics()
 
 
 	// setup the callback routines:
-
 	glutSetWindow(MainWindow);
 	glutDisplayFunc(Display);
 	glutReshapeFunc(Resize);
@@ -714,19 +563,14 @@ InitGraphics()
 
 #ifdef WIN32
 	GLenum err = glewInit();
-	if (err != GLEW_OK)
-	{
+	if (err != GLEW_OK) 	{
 		fprintf(stderr, "glewInit Error\n");
 	}
 #endif
 }
 
 
-
-
-void
-InitLists()
-{
+void InitLists() {
 	SphereList = glGenLists(1);
 	glNewList(SphereList, GL_COMPILE);
 	glColor3f(.9f, .9f, 0.);
@@ -747,15 +591,11 @@ InitLists()
 
 
 // the keyboard callback:
-
-void
-Keyboard( unsigned char c, int x, int y )
-{
+void Keyboard(unsigned char c, int x, int y) {
 	if( DebugOn != 0 )
 		fprintf( stderr, "Keyboard: '%c' (0x%0x)\n", c, c );
 
-	switch( c )
-	{
+	switch(c) {
 		case 'o':
 		case 'O':
 			WhichProjection = ORTHO;
@@ -788,27 +628,19 @@ Keyboard( unsigned char c, int x, int y )
 	}
 
 	// force a call to Display( ):
-
-	glutSetWindow( MainWindow );
-	glutPostRedisplay( );
+	glutSetWindow(MainWindow);
+	glutPostRedisplay();
 }
 
-
 // called when the mouse button transitions down or up:
-
-void
-MouseButton( int button, int state, int x, int y )
-{
+void MouseButton(int button, int state, int x, int y) {
 	int b = 0;			// LEFT, MIDDLE, or RIGHT
 
-	if( DebugOn != 0 )
+	if(DebugOn != 0)
 		fprintf( stderr, "MouseButton: %d, %d, %d, %d\n", button, state, x, y );
 
-	
 	// get the proper button bit mask:
-
-	switch( button )
-	{
+	switch(button) {
 		case GLUT_LEFT_BUTTON:
 			b = LEFT;		break;
 
@@ -825,15 +657,12 @@ MouseButton( int button, int state, int x, int y )
 
 
 	// button down sets the bit, up clears the bit:
-
-	if( state == GLUT_DOWN )
-	{
+	if( state == GLUT_DOWN ) {
 		Xmouse = x;
 		Ymouse = y;
 		ActiveButton |= b;		// set the proper bit
 	}
-	else
-	{
+	else {
 		ActiveButton &= ~b;		// clear the proper bit
 	}
 }
@@ -841,9 +670,7 @@ MouseButton( int button, int state, int x, int y )
 
 // called when the mouse moves while a button is down:
 
-void
-MouseMotion( int x, int y )
-{
+void MouseMotion(int x, int y) {
 	if( DebugOn != 0 )
 		fprintf( stderr, "MouseMotion: %d, %d\n", x, y );
 
@@ -851,15 +678,12 @@ MouseMotion( int x, int y )
 	int dx = x - Xmouse;		// change in mouse coords
 	int dy = y - Ymouse;
 
-	if( ( ActiveButton & LEFT ) != 0 )
-	{
+	if( ( ActiveButton & LEFT ) != 0 ) {
 		Xrot += ( ANGFACT*dy );
 		Yrot += ( ANGFACT*dx );
 	}
 
-
-	if( ( ActiveButton & MIDDLE ) != 0 )
-	{
+	if( ( ActiveButton & MIDDLE ) != 0 ) {
 		Scale += SCLFACT * (float) ( dx - dy );
 
 		// keep object from turning inside-out or disappearing:
@@ -877,9 +701,7 @@ MouseMotion( int x, int y )
 
 
 
-void
-Reset()
-{
+void Reset() {
 	ActiveButton = 0;
 	AxesOn = GLUIFALSE;
 	Paused = GLUIFALSE;
@@ -900,9 +722,7 @@ Reset()
 
 // called when user resizes the window:
 
-void
-Resize( int width, int height )
-{
+void Resize( int width, int height ) {
 	if( DebugOn != 0 )
 		fprintf( stderr, "ReSize: %d, %d\n", width, height );
 
@@ -916,19 +736,15 @@ Resize( int width, int height )
 
 // handle a change to the window's visibility:
 
-void
-Visibility ( int state )
-{
+void Visibility ( int state ) {
 	if( DebugOn != 0 )
 		fprintf( stderr, "Visibility: %d\n", state );
 
-	if( state == GLUT_VISIBLE )
-	{
+	if( state == GLUT_VISIBLE ) {
 		glutSetWindow( MainWindow );
 		glutPostRedisplay( );
 	}
-	else
-	{
+	else {
 		// could optimize by keeping track of the fact
 		// that the window is not visible and avoid
 		// animating or redrawing it ...
@@ -987,9 +803,7 @@ const float BASEFRAC = 1.10f;
 //	Draw a set of 3D axes:
 //	(length is the axis length in world coordinates)
 
-void
-Axes( float length )
-{
+void Axes( float length ) {
 	glBegin( GL_LINE_STRIP );
 		glVertex3f( length, 0., 0. );
 		glVertex3f( 0., 0., 0. );
@@ -1060,9 +874,7 @@ Axes( float length )
 // when this returns, call:
 //		glColor3fv( rgb );
 
-void
-HsvRgb( float hsv[3], float rgb[3] )
-{
+void HsvRgb( float hsv[3], float rgb[3] ) {
 	// guarantee valid input:
 
 	float h = hsv[0] / 60.f;
@@ -1425,9 +1237,7 @@ ErrorCodes[] =
 { CL_INVALID_GLOBAL_WORK_SIZE,		"Invalid Global Work Size" },
 };
 
-void
-PrintCLError(cl_int errorCode, char * prefix, FILE *fp)
-{
+void PrintCLError(cl_int errorCode, char * prefix, FILE *fp) {
 	if (errorCode == CL_SUCCESS)
 		return;
 
@@ -1446,9 +1256,7 @@ PrintCLError(cl_int errorCode, char * prefix, FILE *fp)
 }
 
 
-void
-Quit()
-{
+void Quit() {
 	glutSetWindow(MainWindow);
 	glFinish();
 	glutDestroyWindow(MainWindow);
