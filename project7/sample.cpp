@@ -707,7 +707,7 @@ void Reset() {
 	Paused = GLUIFALSE;
 	Scale = 1.0;
 	Scale2 = 0.0;		// because add 1. to it in Display( )
-	ShowPerformance = GLUIFALSE;
+	ShowPerformance = GLUITRUE; // was GUIFALSE
 	WhichProjection = PERSP;
 	Xrot = Yrot = 0.;
 	TransXYZ[0] = TransXYZ[1] = TransXYZ[2] = 0.;
@@ -718,7 +718,6 @@ void Reset() {
 	RotMatrix[3][0] = RotMatrix[3][1] = RotMatrix[3][3] = 0.;
 	RotMatrix[0][0] = RotMatrix[1][1] = RotMatrix[2][2] = RotMatrix[3][3] = 1.;
 }
-
 
 // called when user resizes the window:
 
@@ -750,7 +749,6 @@ void Visibility ( int state ) {
 		// animating or redrawing it ...
 	}
 }
-
 
 
 ///////////////////////////////////////   HANDY UTILITIES:  //////////////////////////
@@ -945,9 +943,7 @@ void HsvRgb( float hsv[3], float rgb[3] ) {
 
 
 
-void
-InitCL()
-{
+void InitCL() {
 	// see if we can even open the opencl Kernel Program
 	// (no point going on if we can't):
 
@@ -959,17 +955,13 @@ InitCL()
 	}
 
 	// 2. allocate the host memory buffers:
+	cl_int status;		
 
-	cl_int status;		// returned status from opencl calls
-						// test against CL_SUCCESS
-
-						// get the platform id:
-
+	// get the platform id:
 	status = clGetPlatformIDs(1, &Platform, NULL);
 	PrintCLError(status, "clGetPlatformIDs: ");
 
 	// get the device id:
-
 	status = clGetDeviceIDs(Platform, CL_DEVICE_TYPE_GPU, 1, &Device, NULL);
 	PrintCLError(status, "clGetDeviceIDs: ");
 
@@ -979,12 +971,10 @@ InitCL()
 	// (no point going on if it isn't):
 	// (we need the Device in order to ask, so can't do it any sooner than here)
 	
-	if (IsCLExtensionSupported("cl_khr_gl_sharing"))
-	{
+	if (IsCLExtensionSupported("cl_khr_gl_sharing")) {
 		fprintf(stderr, "cl_khr_gl_sharing is supported.\n");
 	}
-	else
-	{
+	else {
 		fprintf(stderr, "cl_khr_gl_sharing is not supported -- sorry.\n");
 		return;
 	}
@@ -993,8 +983,7 @@ InitCL()
 
 	// 3. create an opencl context based on the opengl context:
 
-	cl_context_properties props[] =
-	{
+	cl_context_properties props[] = {
 		CL_GL_CONTEXT_KHR,		(cl_context_properties)wglGetCurrentContext(),
 		CL_WGL_HDC_KHR,			(cl_context_properties)wglGetCurrentDC(),
 		CL_CONTEXT_PLATFORM,		(cl_context_properties)Platform,
@@ -1138,9 +1127,7 @@ Ranf(float low, float high)
 }
 
 
-bool
-IsCLExtensionSupported(const char *extension)
-{
+bool IsCLExtensionSupported(const char *extension) {
 	// see if the extension is bogus:
 
 	if (extension == NULL || extension[0] == '\0')
