@@ -3,7 +3,6 @@ typedef float4 vector;
 typedef float4 color;
 typedef float4 sphere;
 
-
 vector
 Bounce( vector in, vector n )
 {
@@ -35,6 +34,7 @@ Particle( global point *dPobj, global vector *dVel, global color *dCobj )
 	const float4 G       = (float4) ( 0., -9.8, 0., 0. );
 	const float  DT      = 0.1;
 	const sphere Sphere1 = (sphere)( -100., -800., 0.,  600. );
+	const sphere Sphere2 = (sphere)(-100., -3000., 0., 2000);
 	int gid = get_global_id( 0 );
 
 	point  p = dPobj[gid];
@@ -49,6 +49,11 @@ Particle( global point *dPobj, global vector *dVel, global color *dCobj )
 	{
 		vp = BounceSphere( p, v, Sphere1 );
 		pp = p + vp*DT + (float4)(.5*DT*DT)*G;
+	}
+	if (IsInsideSphere(pp, Sphere2))
+	{
+		vp = BounceSphere(p, v, Sphere2);
+		pp = p + vp * DT + (float4)(.5*DT*DT)*G;
 	}
 
 	dPobj[gid] = pp;

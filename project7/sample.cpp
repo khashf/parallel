@@ -229,6 +229,7 @@ int main(int argc, char *argv[]) {
 
 
 void ResetParticles() {
+	// Position
 	glBindBuffer(GL_ARRAY_BUFFER, hPobj);
 	struct xyzw *points = (struct xyzw *) glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
 	for (int i = 0; i < NUM_PARTICLES; i++) {
@@ -239,6 +240,7 @@ void ResetParticles() {
 	}
 	glUnmapBuffer(GL_ARRAY_BUFFER);
 
+	// Color
 	glBindBuffer(GL_ARRAY_BUFFER, hCobj);
 	struct rgba *colors = (struct rgba *) glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
 	for (int i = 0; i < NUM_PARTICLES; i++) {
@@ -249,6 +251,7 @@ void ResetParticles() {
 	}
 	glUnmapBuffer(GL_ARRAY_BUFFER);
 
+	// Velocity
 	for (int i = 0; i < NUM_PARTICLES; i++) {
 		hVel[i].x = Ranf(VMIN, VMAX);
 		hVel[i].y = Ranf(0., VMAX);
@@ -264,8 +267,6 @@ void ResetParticles() {
 void Animate() {
 	cl_int  status;
 	double time0, time1;
-
-	// acquire the vertex buffers from opengl:
 
 	glutSetWindow(MainWindow);
 	glFinish();
@@ -571,13 +572,27 @@ void InitGraphics() {
 
 
 void InitLists() {
-	SphereList = glGenLists(1);
+	SphereList = glGenLists(2);
 	glNewList(SphereList, GL_COMPILE);
-	glColor3f(.9f, .9f, 0.);
+
+	
 	glPushMatrix();
+	
+	glColor3f(.9f, .9f, 0.);
 	glTranslatef(-100., -800., 0.);
 	glutWireSphere(600., 100., 100.);
+
 	glPopMatrix();
+
+	
+	glPushMatrix();
+
+	glColor3f(.9f, 0., .9f);
+	glTranslatef(-100., -3000., 0.);
+	glutSolidSphere(2000., 100., 100.);
+	
+	glPopMatrix();
+
 	glEndList();
 
 	AxesList = glGenLists(1);
