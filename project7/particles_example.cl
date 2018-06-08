@@ -45,11 +45,6 @@ Particle( global point *dPobj, global vector *dVel, global color *dCobj )
 	point  pp = p + v*DT + (float4)(.5*DT*DT)*G;
 	vector vp = v + G*DT;
 
-	/*c.x = pp.x;
-	c.y = pp.y;
-	c.z = pp.z;
-	c.w = 1.;*/
-
 	c.x = vp.x + pp.x;
 	c.y = vp.y + pp.y;
 	c.z = vp.z + pp.z;

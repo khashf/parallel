@@ -16,6 +16,13 @@
 #include <omp.h>
 #include <math.h>
 #include <string.h>
+#include <fstream>
+#include <iostream>
+using std::cerr;
+using std::endl;
+using std::cout;
+using std::ostream;
+using std::ofstream;
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -69,6 +76,9 @@ const char *CL_FILE_NAME = { "particles_example.cl" };
 const char *CL_BINARY_NAME = { "particles.nv" };
 
 double ElapsedTime;
+double Perf = 0.0;
+unsigned long long PerfCount = 0;
+long double avgPerf;
 int	ShowPerformance;
 
 size_t GlobalWorkSize[3] = { NUM_PARTICLES, 1, 1 };
@@ -177,6 +187,7 @@ float	TransXYZ[3];		// set by glui translation widgets
 GLfloat	RotMatrix[4][4];	// set by glui rotation widget
 float	Scale2;				// scaling factors
 GLuint	SphereList;
+FILE* OutFile;
 
 int	Paused;
 cl_uint status;
@@ -214,6 +225,15 @@ float	Ranf(float, float);
 void	ResetParticles();
 
 int main(int argc, char *argv[]) {
+
+	OutFile = fopen("data.csv", "a");
+	if (OutFile == NULL) {
+		printf("Error: Could not opening file!\n");
+		exit(1);
+	}
+
+	//fprintf(OutFile, "Number of Particles, Performance\n");
+
 	glutInit(&argc, argv);
 	InitGraphics();
 	InitLists();
@@ -224,6 +244,7 @@ int main(int argc, char *argv[]) {
 
 	glutMainLoop();
 
+	fclose(OutFile);
 	return 0;
 }
 
@@ -372,7 +393,10 @@ void Display() {
 
 	if (ShowPerformance) {
 		char str[128];
-		sprintf(str, "%6.1f GigaParticles/Sec", (float)NUM_PARTICLES / ElapsedTime / 1000000000.);
+		double perf = (double)NUM_PARTICLES / ElapsedTime / 1000000000.;
+		Perf = perf;
+		PerfCount += 1;
+		sprintf(str, "%6.1lf GigaParticles/Sec, %6.1llu total drawings", perf, PerfCount);
 		glDisable(GL_DEPTH_TEST);
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
@@ -384,6 +408,7 @@ void Display() {
 	}
 
 	glutSwapBuffers();
+	//printf("done\n");
 	glFlush();
 }
 
@@ -437,7 +462,11 @@ void DoMainMenu(int id) {
 			glutSetWindow( MainWindow );
 			glFinish( );
 			glutDestroyWindow( MainWindow );
-			exit( 0 );
+			printf("done\n");
+			//avgPerf = SumPerf / (double)PerfCount;
+			fprintf(OutFile, "%d,%lf\n", NUM_PARTICLES, Perf);
+			fprintf(stdout, "%d,%lf\n", NUM_PARTICLES, Perf);
+			exit(0);
 			break;
 
 		default:
