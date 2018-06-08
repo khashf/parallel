@@ -70,21 +70,21 @@ const float ZMAX = { 100.0 };
 const float VMIN = { -100. };
 const float VMAX = { 100. };
 
-const int NUM_PARTICLES = 1024 * 1024;
+const int NUM_PARTICLES = 1024 * 10000;
 const int LOCAL_SIZE = 32;
-const char *CL_FILE_NAME = { "particles_example.cl" };
+const char *CL_FILE_NAME = { "luu_particle.cl" };
 const char *CL_BINARY_NAME = { "particles.nv" };
 
 double ElapsedTime;
-double Perf = 0.0;
-unsigned long long PerfCount = 0;
+float AvgPerf = 0.;
+int NumTimeSteps;
 long double avgPerf;
 int	ShowPerformance;
 
 size_t GlobalWorkSize[3] = { NUM_PARTICLES, 1, 1 };
 size_t LocalWorkSize[3] = { LOCAL_SIZE,    1, 1 };
 
-const char *WINDOWTITLE = { "OpenGL - OpenCL Interpolation Example" };
+const char *WINDOWTITLE = { "Khuong Luu" };
 const char *GLUITITLE   = { "User Interface Window" };
 const int GLUITRUE  = { true  };
 const int GLUIFALSE = { false };
@@ -315,6 +315,9 @@ void Animate() {
 		PrintCLError(status, "clWaitForEvents: ");
 		time1 = omp_get_wtime();
 		ElapsedTime = time1 - time0;
+		float curPerf = (float)NUM_PARTICLES / ElapsedTime / 1000000000.;
+		AvgPerf = AvgPerf * ((float)(NumTimeSteps) / (float)(NumTimeSteps + 1)) + curPerf / (float)(NumTimeSteps + 1);
+		NumTimeSteps++;
 	}
 
 	clFinish(CmdQueue);
@@ -394,9 +397,10 @@ void Display() {
 	if (ShowPerformance) {
 		char str[128];
 		double perf = (double)NUM_PARTICLES / ElapsedTime / 1000000000.;
-		Perf = perf;
-		PerfCount += 1;
-		sprintf(str, "%6.1lf GigaParticles/Sec, %6.1llu total drawings", perf, PerfCount);
+		//Perf = perf;
+		//PerfCount += 1;
+		//sprintf(str, "%6.1lf GigaParticles/Sec, %6.1llu total drawings", perf, PerfCount);
+		sprintf(str, "%6.1f GigaParticles/Sec", AvgPerf);
 		glDisable(GL_DEPTH_TEST);
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
@@ -464,8 +468,8 @@ void DoMainMenu(int id) {
 			glutDestroyWindow( MainWindow );
 			printf("done\n");
 			//avgPerf = SumPerf / (double)PerfCount;
-			fprintf(OutFile, "%d,%lf\n", NUM_PARTICLES, Perf);
-			fprintf(stdout, "%d,%lf\n", NUM_PARTICLES, Perf);
+			fprintf(OutFile, "%d,%lf\n", NUM_PARTICLES, AvgPerf);
+			fprintf(stdout, "%d,%lf\n", NUM_PARTICLES, AvgPerf);
 			exit(0);
 			break;
 

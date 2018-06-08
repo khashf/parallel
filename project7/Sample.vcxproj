@@ -130,7 +130,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="particles.cl" />
-    <None Include="particles_example.cl" />
+    <None Include="luu_particle.cl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

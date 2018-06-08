@@ -23,7 +23,7 @@
     <None Include="particles.cl">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="particles_example.cl">
+    <None Include="luu_particle.cl">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>
